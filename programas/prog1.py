@@ -6,7 +6,7 @@ import zipfile
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
-from programas.support_code import buscar_cnpj_razao, calcular_trimestre, ler_arquivo_com_encoding
+from programas.support_code import buscar_cnpj_razao, calcular_trimestre, ler_arquivo_com_encoding, registrar_erros
 
 #Caminhos das Pastas
 BASE_DIR = "documents"
@@ -584,32 +584,11 @@ def atividade13():
                 "Detalhes": f"Trimestre: {row.get('Trimestre', '')} | Ano: {row.get('Ano', '')} | ValorDespesas: {row.get('ValorDespesas', '')}"
             })
 
-    #Criação/Atualização de arquivo de erro
-    if erros_padronizados:
-        df_erros = pd.DataFrame(erros_padronizados)
-        
-        # Colunas fixas e ordenadas
-        colunas_fixas = [
-            "TipoErro", "CNPJ", "RazaoSocial", "CNPJsDiferentes",
-            "Quantidade", "QuantidadeLinhasAfetadas", "LinhasAfetadas", "Detalhes"
-        ]
-        
-        # Verifica se arquivo existe para decidir se escreve cabeçalho
-        caminho_erros = os.path.join(PASTA_RESULTADOS, "consolidado_despesas_erros.csv")
-        arquivo_existe = os.path.exists(caminho_erros)
-        df_erros[colunas_fixas].to_csv(
-            caminho_erros,
-            mode='a',                      # adiciona ao final
-            header=not arquivo_existe,     # cabeçalho só na primeira vez
-            index=False,
-            encoding='utf-8-sig',
-            sep=';',
-            quoting=csv.QUOTE_MINIMAL
-        )
-        print(f"Erros adicionados em: {caminho_erros}")
-        print(f"Total de erros registrados nesta execução: {len(erros_padronizados)}")
-    else:
-        print("Nenhuma inconsistência ou valor suspeito encontrado.")
+    caminho_erros = os.path.join(
+        PASTA_RESULTADOS,
+        "consolidado_despesas_erros.csv"
+    )
+    registrar_erros(erros_padronizados, caminho_erros)
 
     #Criação do arquivo de despesas
     caminho_saida = os.path.join(PASTA_RESULTADOS, "consolidado_despesas.csv")

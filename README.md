@@ -54,9 +54,7 @@ São realizadas as seguintes validações:
 - Verificação de ValorDespesas, repetindo as mesmas validações realizadas no exercício 1.3. Essa redundância foi adotada para atender explicitamente aos requisitos da atividade.
 Assim como nas etapas anteriores, apenas as linhas com ValorDespesas zerado são removidas do arquivo principal e devidamente documentadas no arquivo de erros. Todas as demais inconsistências são apenas registradas, sem remoção dos dados, com o objetivo de preservar a informação até que seja possível definir uma estratégia adequada de tratamento, evitando a perda de dados que ainda possam ser validados ou corrigidos.
 Após o registro de todos os erros identificados, esses registros são comparados com os itens já existentes no arquivo consolidado_despesas_erros.csv, sendo adicionados apenas aqueles que ainda não constam no arquivo, evitando duplicidades em execuções múltiplas do programa.
-
 Por fim, o arquivo consolidado_despesas.csv é atualizado com a coluna Status, refletindo o resultado das validações realizadas.
-
 Trade-off técnico: essa abordagem prioriza a transparência e a auditabilidade dos dados, ao custo de um possível aumento de retrabalho manual. No entanto, esse retrabalho tende a diminuir ao longo do tempo, à medida que ações específicas passam a ser definidas para cada tipo de inconsistência identificada. Ainda assim, manter um registro separado dos dados originais com erro é fundamental para garantir rastreabilidade e permitir análises futuras.
 
 

@@ -135,3 +135,54 @@ def cnpj_valido(cnpj: str) -> bool:
     digito_1 = calcular_digito(cnpj[:12], pesos_1)
     digito_2 = calcular_digito(cnpj[:13], pesos_2)
     return cnpj[-2:] == digito_1 + digito_2
+
+
+#Função de registro de erros
+def registrar_erros(erros, caminho_erros):
+    if not erros:
+        return
+    
+    #Cria colunas padronizadas
+    colunas_fixas = [
+        "TipoErro", "CNPJ", "RazaoSocial", "CNPJsDiferentes",
+        "Quantidade", "QuantidadeLinhasAfetadas", "LinhasAfetadas", "Detalhes"
+    ]
+
+    #Gera data frame de erros
+    df_erros_novos = pd.DataFrame(erros)
+
+    #Gera todas as colunas
+    for col in colunas_fixas:
+        if col not in df_erros_novos.columns:
+            df_erros_novos[col] = ""
+    df_erros_novos = df_erros_novos[colunas_fixas].fillna("")
+
+    # Se arquivo não existir, cria
+    if not os.path.exists(caminho_erros):
+        df_erros_novos.to_csv(
+            caminho_erros,
+            sep=";",
+            index=False,
+            encoding="utf-8-sig"
+        )
+        print(f"Arquivo de erros criado: {caminho_erros}")
+        print(f"{len(df_erros_novos)} erro(s) registrado(s).")
+        return
+    
+    # Se existir, carrega e compara
+    df_erros_existentes = pd.read_csv(caminho_erros, sep=";", dtype=str).fillna("")
+
+    # Concatena e remove duplicados
+    df_final = pd.concat([df_erros_existentes, df_erros_novos], ignore_index=True)
+    df_final = df_final.drop_duplicates()
+    novos = len(df_final) - len(df_erros_existentes)
+    if novos > 0:
+        df_final.to_csv(
+            caminho_erros,
+            sep=";",
+            index=False,
+            encoding="utf-8-sig"
+        )
+        print(f"{novos} erro(s) novo(s) adicionado(s) em {caminho_erros}")
+    else:
+        print("Nenhum erro novo para adicionar.")

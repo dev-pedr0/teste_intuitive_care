@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from openpyxl import load_workbook
 
-from programas.support_code import cnpj_valido, ler_arquivo_com_encoding
+from programas.support_code import cnpj_valido, ler_arquivo_com_encoding, registrar_erros
 
 #Caminhos das Pastas:
 BASE_DIR = "documents"
@@ -112,30 +112,7 @@ def atividade21():
             }
             erros.append(erro_registro)
 
-    #Se houver erros adiciona ao arquivo de erros existente
-    if erros:
-        print("Registrando inconsistências:")
-        df_erros_novo = pd.DataFrame(erros).drop_duplicates()
-
-        #Se não houver arquivo de erro encerra o programa
-        if not os.path.exists(caminho_erros):
-            print(f"Arquivo de erros não encontrado em: {caminho_erros}")
-            return
-        
-        #Garante colunas do mesmo tipo
-        df_erros_existente = pd.read_csv(caminho_erros, sep=";", dtype=str)
-        df_erros_existente = df_erros_existente.fillna("")
-        df_erros_novo = df_erros_novo.fillna("")
-
-        #Remove erros novos que já existem no arquivo
-        df_final = pd.concat([df_erros_existente, df_erros_novo]).drop_duplicates()
-
-        #Adiciona erros novos
-        if len(df_final) > len(df_erros_existente):
-            df_final.to_csv(caminho_erros, sep=";", index=False, encoding="utf-8-sig")
-            print(f"{len(df_final) - len(df_erros_existente)} erro(s) novo(s) adicionado(s).")
-        else:
-            print("Nenhum erro novo para adicionar.")
+    registrar_erros(erros, caminho_erros)
     
     #Remove linhas com ValorDespesas zeradas
     if linhas_para_remover:
@@ -149,9 +126,10 @@ def atividade21():
 #Atividade 2.2
 def atividade22():
     #Caminhos dos arquivos a serem utilizados
-    caminho_despesas = os.path.join(PASTA_RESULTADOS, "despesas_consolidadas.csv")
+    caminho_despesas = os.path.join(PASTA_RESULTADOS, "consolidado_despesas.csv")
     caminho_ativas = os.path.join(PASTA_DOWNLOADS, "Relatorio_cadop.csv")
     caminho_cancel = os.path.join(PASTA_DOWNLOADS, "Relatorio_cadop_canceladas.csv")
+    caminho_erros = os.path.join(PASTA_RESULTADOS, "consolidado_despesas_erros.csv")
 
     if not os.path.exists(caminho_despesas) or not os.path.exists(caminho_ativas):
         print("Arquivo despesas_consolidadas.csv e/ou relatório de operadoras ativas não encontrados.")
@@ -189,26 +167,80 @@ def atividade22():
     #Normaliza formato de CNPJ e cria coluna auxiliar CNPJ_norm no data frame do cadop
     df_cadop["CNPJ_norm"] = df_cadop["CNPJ"].str.replace(r"[./-]", "", regex=True).str.lstrip("0")
 
-    # Remove duplicatas do dataframe cadop
+    # Detecta CNPJs duplicados no cadastro
+    duplicados = df_cadop[df_cadop.duplicated(subset="CNPJ_norm", keep=False)]
+
+    if not duplicados.empty:
+        # Agrupa por CNPJ para verificar divergência de dados
+        conflitos = (
+            duplicados
+            .groupby("CNPJ_norm")
+            .filter(lambda x: x[["REGISTRO_OPERADORA", "Modalidade", "UF"]].nunique().max() > 1)
+        )
+
+        if not conflitos.empty:
+            erros_cadop = []
+
+            for cnpj, grupo in conflitos.groupby("CNPJ_norm"):
+                erros_cadop.append({
+                    "TipoErro": "CNPJ duplicado no cadastro com dados divergentes",
+                    "CNPJ": cnpj,
+                    "RazaoSocial": "",
+                    "CNPJsDiferentes": "",
+                    "Quantidade": len(grupo),
+                    "QuantidadeLinhasAfetadas": len(grupo),
+                    "LinhasAfetadas": ", ".join(grupo.index.astype(str)),
+                    "Detalhes": (
+                        "Registros divergentes no cadastro. "
+                        "Utilizado o primeiro registro após deduplicação."
+                    )
+                })
+
+            registrar_erros(erros_cadop, caminho_erros)
+
     df_cadop = df_cadop.drop_duplicates(subset="CNPJ_norm", keep="first")
 
-    # Normaliza CNPJ no arquivo de despesas e força seu formato em string
-    df_despesas["CNPJ"] = df_despesas["CNPJ"].astype(str).str.strip()
+    #Normaliza CNPJ no arquivo de despesas e força seu formato em string
+    df_despesas["CNPJ"] = (
+        df_despesas["CNPJ"]
+        .astype(str)
+        .str.replace(r"\.0$", "", regex=True)
+        .str.strip()
+    )
     df_despesas["CNPJ_norm"] = df_despesas["CNPJ"].str.replace(r"[./-]", "", regex=True).str.lstrip("0")
 
-    #Cria dicionário que relaciona CNPJ as outras colunas desejadas
-    dicionario = df_cadop.set_index("CNPJ_norm")[["REGISTRO_OPERADORA", "Modalidade", "UF"]].to_dict("index")
+    #Verifica CNPJ's vazios
+    mask_cnpj_vazio = df_despesas["CNPJ_norm"].isna() | (df_despesas["CNPJ_norm"] == "")
+    df_erros_cnpj = df_despesas[mask_cnpj_vazio].copy()
+    if not df_erros_cnpj.empty:
+        erros_cnpj_vazio = []
+        for _, row in df_erros_cnpj.iterrows():
+            erros_cnpj_vazio.append({
+                "TipoErro": "CNPJ inválido ou não encontrado",
+                "CNPJ": "",
+                "RazaoSocial": row.get("RazaoSocial", ""),
+                "CNPJsDiferentes": "",
+                "Quantidade": "",
+                "QuantidadeLinhasAfetadas": "",
+                "LinhasAfetadas": "",
+                "Detalhes": "Registro removido do consolidado por ausência de CNPJ"
+            })
+        registrar_erros(erros_cnpj_vazio, caminho_erros)      
 
-    #Adiciona as novas colunas em despesas
-    df_despesas["RegistroANS"] = df_despesas["CNPJ_norm"].map(
-        lambda x: dicionario.get(x, {}).get("REGISTRO_OPERADORA")
+    # Remove registros com CNPJ vazio do dataframe principal
+    df_despesas = df_despesas[~mask_cnpj_vazio]
+
+    #Faz join direto via merge usando CNPJ normalizado
+    df_despesas = df_despesas.merge(
+        df_cadop[["CNPJ_norm", "REGISTRO_OPERADORA", "Modalidade", "UF"]],
+        on="CNPJ_norm",
+        how="left"
     )
-    df_despesas["Modalidade"] = df_despesas["CNPJ_norm"].map(
-        lambda x: dicionario.get(x, {}).get("Modalidade")
-    )
-    df_despesas["UF"] = df_despesas["CNPJ_norm"].map(
-        lambda x: dicionario.get(x, {}).get("UF")
-    )
+
+    #Renomeia coluna para o padrão pedido na atividade
+    df_despesas = df_despesas.rename(columns={
+        "REGISTRO_OPERADORA": "RegistroANS"
+    })
 
     #Elimina coluna auxiliar
     df_despesas = df_despesas.drop(columns=["CNPJ_norm"], errors="ignore")
