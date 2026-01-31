@@ -1,4 +1,5 @@
 import os
+import zipfile
 import pandas as pd
 from openpyxl import load_workbook
 
@@ -10,6 +11,9 @@ PASTA_DOWNLOADS = os.path.join(BASE_DIR, "downloads")
 PASTA_EXTRAIDOS = os.path.join(BASE_DIR, "extraidos")
 PASTA_NORMALIZADOS = os.path.join(BASE_DIR, "normalizados")
 PASTA_RESULTADOS = os.path.join(BASE_DIR, "resultados")
+
+#Meu nome
+NOME = "Pedro_Costa"
 
 # Cria todas as pastas de uma vez
 os.makedirs(PASTA_DOWNLOADS, exist_ok=True)
@@ -254,190 +258,139 @@ def atividade22():
     df_despesas.to_csv(caminho_despesas, index=False, encoding="utf-8-sig")
     print(f"Arquivo atualizado: {caminho_despesas}")
 
-
-
 #Atividade 2.3
 def atividade23():
-    #=====================#
-    #Parte 1 - Agrupamento Correto do documento
-    #=====================#
-
     #Caminhos para os arquivos que serão utilizados
-    caminho_original = os.path.join(PASTA_RESULTADOS, "despesas_consolidadas.csv")
-    caminho_novo = os.path.join(PASTA_RESULTADOS, "despesas_consolidadas_agrupado.csv")
-    caminho_erros = os.path.join(PASTA_RESULTADOS, "despesas_consolidadas_erros.xlsx")
+    caminho_consolidado = os.path.join(PASTA_RESULTADOS, "consolidado_despesas.csv")
+    caminho_saida = os.path.join(PASTA_RESULTADOS, "despesas_agregadas.csv")
+    caminho_erros = os.path.join(PASTA_RESULTADOS, "consolidado_despesas_erros.csv")
 
-    #Verifica se arquvio de despesas existe
-    if not os.path.exists(caminho_original):
+    #Verifica se arquivo de despesas existe
+    if not os.path.exists(caminho_consolidado):
         print("Arquivo despesas_consolidadas.csv não encontrado.")
         return
     
     #Lê arquivo de despesas
-    df = pd.read_csv(caminho_original, dtype=str)
+    df = pd.read_csv(caminho_consolidado)
 
-    # Verifica se os dados já estão agrupado por RazaoSocial e UF
-    agrupamento = df.groupby(["RazaoSocial", "UF"]).size().reset_index(name="contagem")
-    nao_agrupado = agrupamento[agrupamento["contagem"] > 1]
+    # Garante tipos numéricos para cálculos estatísticos
+    df["ValorDespesas"] = pd.to_numeric(df["ValorDespesas"], errors="coerce")
 
-    #Se os dados já estiverem agrupados corretamente o código encerra
-    if nao_agrupado.empty:
-        print("Os dados já estão agrupados por RazaoSocial + UF.")
-        return
-
-    print(f"Dados NÃO estão agrupados. Encontradas {len(nao_agrupado)} combinações duplicadas.")
-
-    #Verifica a presença de erros antes de agrupar, como modalidades dfiferentes no mesmo cnpj
+    #Validação e verificação de erros
     erros = []
-    grupos = df.groupby(["RazaoSocial", "UF"])
-    for nome_grupo, grupo in grupos:
-        if len(grupo) > 1:
-            if grupo["CNPJ"].nunique() > 1:
-                erros.append({
-                    "CNPJ": grupo["CNPJ"].iloc[0],
-                    "RazaoSocial": nome_grupo[0],
-                    "Trimestre": grupo["Trimestre"].iloc[0],  # mostra um exemplo
-                    "ValorDespesas": grupo["ValorDespesas"].sum(),
-                    "TipoErro": "CNPJ diferente no mesmo grupo (RazaoSocial + UF)"
-                })
-            if grupo["Modalidade"].nunique() > 1:
-                erros.append({
-                    "CNPJ": grupo["CNPJ"].iloc[0],
-                    "RazaoSocial": nome_grupo[0],
-                    "Trimestre": grupo["Trimestre"].iloc[0],
-                    "ValorDespesas": grupo["ValorDespesas"].sum(),
-                    "TipoErro": "Modalidade diferente no mesmo grupo (RazaoSocial + UF)"
-                })
-            if grupo["RegistroANS"].nunique() > 1:
-                erros.append({
-                    "CNPJ": grupo["CNPJ"].iloc[0],
-                    "RazaoSocial": nome_grupo[0],
-                    "Trimestre": grupo["Trimestre"].iloc[0],
-                    "ValorDespesas": grupo["ValorDespesas"].sum(),
-                    "TipoErro": "RegistroANS diferente no mesmo grupo (RazaoSocial + UF)"
-                })
-    
-    # Salva erros no Excel eliminando erros duplicados
-    if erros:
-        df_erros_novo = pd.DataFrame(erros).drop_duplicates()
-        if df_erros_novo.empty:
-            print("Nenhuma inconsistência encontrada nesta execução.")
-        else:
-            if os.path.exists(caminho_erros):
-                try:
-                    try:
-                        df_erros_existente = pd.read_excel(caminho_erros, sheet_name="Erros", dtype=str)
-                    except ValueError:
-                        df_erros_existente = pd.DataFrame()
-                
-                    df_erros_final = pd.concat([df_erros_existente, df_erros_novo], ignore_index=True).drop_duplicates()
-                    with pd.ExcelWriter(caminho_erros, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-                        df_erros_final.to_excel(writer, index=False, sheet_name="Erros")                
-                    novos = len(df_erros_final) - len(df_erros_existente)
-                    print(f"{novos} novos erros adicionados. Total agora: {len(df_erros_final)}")
-            
-                except Exception as e:
-                    print(f"Erro ao atualizar Excel existente: {e}")
-                    print("→ Criando novo arquivo com os erros atuais.")
-                    df_erros_novo.to_excel(caminho_erros, index=False, sheet_name="Erros")
-            
-            else:
-                #Cria novo arquivo caso não exista
-                df_erros_novo.to_excel(caminho_erros, index=False, sheet_name="Erros")
-                print(f"{len(df_erros_novo)} inconsistências registradas (novo arquivo criado).")
+    linhas_para_remover = [] 
+    for idx, row in df.iterrows():
+        problemas = []
 
-    # Realiza o agrupamento desejado
-    df_agrupado = df.groupby(
-        ["RazaoSocial", "UF", "Modalidade", "RegistroANS", "CNPJ", "Status"],
-        as_index=False,
-        observed=True
-    ).agg({
-        "ValorDespesas": "sum",
-        "Trimestre": lambda x: ", ".join(sorted(x.unique()))
+        # Valor nulo ou inválido
+        if pd.isna(row["ValorDespesas"]):
+            problemas.append("ValorDespesas inválido ou nulo")
+
+        # Valor negativo
+        if row["ValorDespesas"] < 0:
+            problemas.append("ValorDespesas negativo")
+
+        # Campos chave vazios
+        if not str(row["RazaoSocial"]).strip():
+            problemas.append("RazaoSocial vazia")
+            linhas_para_remover.append(idx)
+        if not str(row["UF"]).strip():
+            problemas.append("UF vazia")
+            linhas_para_remover.append(idx)
+
+        # Registro estruturado de erros
+        for problema in problemas:
+            erros.append({
+                "TipoErro": problema,
+                "CNPJ": row.get("CNPJ", ""),
+                "RazaoSocial": row.get("RazaoSocial", ""),
+                "CNPJsDiferentes": "",
+                "Quantidade": "",
+                "QuantidadeLinhasAfetadas": "",
+                "LinhasAfetadas": str(idx),
+                "Detalhes": f"Trimestre: {row.get('Trimestre', '')} | ValorDespesas: {row.get('ValorDespesas', '')}"
+            })
+    registrar_erros(erros, caminho_erros)
+    
+    #Remove linhas com UF ou Razão vazias
+    if linhas_para_remover:
+        df.drop(index=linhas_para_remover, inplace=True)
+        df.reset_index(drop=True, inplace=True)
+    
+    #Agrupa por RazaoSocial, UF e Trimestre para realizar os calculos devidos
+    df_trimestre = df.groupby(
+        ["RazaoSocial", "UF", "Trimestre"],
+        as_index=False
+    ).agg(
+        Total_Trimestre=("ValorDespesas", "sum"),
+        Media_Trimestre=("ValorDespesas", "mean"),
+        Desvio_Trimestre=("ValorDespesas", "std")
+    )
+
+    #Pivot para médias por trimestre
+    media_pivot = df_trimestre.pivot(
+        index=["RazaoSocial", "UF"],
+        columns="Trimestre",
+        values="Media_Trimestre"
+    ).reset_index()
+
+    #Pivot para desvios por trimestre
+    desvio_pivot = df_trimestre.pivot(
+        index=["RazaoSocial", "UF"],
+        columns="Trimestre",
+        values="Desvio_Trimestre"
+    ).reset_index()
+
+    #Total geral de despesas por RazaoSocial e UF
+    total_geral = df.groupby(
+        ["RazaoSocial", "UF"],
+        as_index=False
+    ).agg(
+        Total_Despesas=("ValorDespesas", "sum")
+    )
+
+    #Merge de todas as métricas
+    df_agregado = total_geral.merge(
+        media_pivot,
+        on=["RazaoSocial", "UF"],
+        how="left"
+    ).merge(
+        desvio_pivot,
+        on=["RazaoSocial", "UF"],
+        how="left"
+    )
+
+    #Renomeia colunas para deixar explícito média e desvio por trimestre
+    df_agregado = df_agregado.rename(columns={
+        "1º Trimestre_x": "Media_1º_Trimestre",
+        "2º Trimestre_x": "Media_2º_Trimestre",
+        "3º Trimestre_x": "Media_3º_Trimestre",
+        "1º Trimestre_y": "Desvio_1º_Trimestre",
+        "2º Trimestre_y": "Desvio_2º_Trimestre",
+        "3º Trimestre_y": "Desvio_3º_Trimestre",
     })
 
-    # Mantém Status como última coluna
-    cols = [col for col in df_agrupado.columns if col != "Status"] + ["Status"]
-    df_agrupado = df_agrupado[cols]
+    #Ordena por despesas decrescente
+    df_agregado = df_agregado.sort_values(
+        by="Total_Despesas",
+        ascending=False
+    ).reset_index(drop=True)
 
-    # Salva o novo arquivo
-    df_agrupado.to_csv(caminho_novo, index=False, encoding="utf-8-sig")
-    print(f"Agrupamento concluído!")
+    #Criação do arquivo agregado
+    df_agregado.to_csv(
+        caminho_saida,
+        index=False,
+        encoding="utf-8-sig"
+    )
+    print(f"Arquivo criado com sucesso: {caminho_saida}")
 
-    #=====================#
-    #Parte 2 - Média de Despesas e Erros Padrão
-    #=====================#
+    #Criação de arquivo zip
+    nome_zip = f"Teste_{NOME}.zip"
+    caminho_zip = os.path.join(PASTA_RESULTADOS, nome_zip)
 
-    #Caminho dos arquivos a serem utilizados e criados
-    caminho_agrupado = os.path.join(PASTA_RESULTADOS, "despesas_consolidadas_agrupado.csv")
-    caminho_normalizados = os.path.join(PASTA_NORMALIZADOS, "dados_normalizados.csv")
-    caminho_saida = os.path.join(PASTA_RESULTADOS, "despesas_agregadas.csv")
-
-    #Verifica se arquivos existem 
-    if not os.path.exists(caminho_agrupado):
-        print("Arquivo despesas_consolidadas_agrupado.csv não encontrado.")
-        return 
-    if not os.path.exists(caminho_normalizados):
-        print("Arquivo dados_normalizados.csv não encontrado.")
-        return
-    
-    #Lê arquivos
-    df_agrupado = pd.read_csv(caminho_agrupado, dtype=str)
-    df_normal = pd.read_csv(caminho_normalizados, dtype={"registro_ans": str, "valor_inicial": float, "valor_final": float, "ano": int, "mes": int})
-
-    #Cria a coluna de despesa calculada
-    df_normal["Despesa"] = df_normal["valor_final"] - df_normal["valor_inicial"]
-
-    #Calcula trimestre baseado no mês
-    def calcular_trimestre(mes):
-        if 1 <= mes <= 3:
-            return "1º Trimestre"
-        elif 4 <= mes <= 6:
-            return "2º Trimestre"
-        elif 7 <= mes <= 9:
-            return "3º Trimestre"
-        else:
-            return "Outros"
-    df_normal["Trimestre"] = df_normal["mes"].apply(calcular_trimestre)
-
-    #Cria data frame com as colunas desejadas
-    stats_por_trimestre = df_normal.groupby(["registro_ans", "Trimestre"]).agg({
-        "Despesa": ["mean", "std"]
-    }).reset_index()
-    stats_por_trimestre.columns = ["registro_ans", "Trimestre", "Media_Despesa", "Desvio_Despesa"]
-
-    #Pivot para colunas separadas por trimestre
-    media_pivot = stats_por_trimestre.pivot(index="registro_ans", columns="Trimestre", values="Media_Despesa").reset_index()
-    desvio_pivot = stats_por_trimestre.pivot(index="registro_ans", columns="Trimestre", values="Desvio_Despesa").reset_index()
-    media_pivot.columns = ["registro_ans", "Media_1o_Trimestre", "Media_2o_Trimestre", "Media_3o_Trimestre"]
-    desvio_pivot.columns = ["registro_ans", "Desvio_1o_Trimestre", "Desvio_2o_Trimestre", "Desvio_3o_Trimestre"]
-
-    #Calcula média e desvio total por registro_ans
-    stats_total = df_normal.groupby("registro_ans")["Despesa"].agg(["mean", "std"]).reset_index()
-    stats_total.columns = ["registro_ans", "Media_Total", "Desvio_Total"]
-
-    # Merge tudo no agrupado usando RegistroANS como chave
-    df_agrupado = df_agrupado.merge(media_pivot, left_on="RegistroANS", right_on="registro_ans", how="left").drop(columns=["registro_ans"])
-    df_agrupado = df_agrupado.merge(desvio_pivot, left_on="RegistroANS", right_on="registro_ans", how="left").drop(columns=["registro_ans"])
-    df_agrupado = df_agrupado.merge(stats_total, left_on="RegistroANS", right_on="registro_ans", how="left").drop(columns=["registro_ans"])
-
-    # Mantém Status como última coluna
-    if "Status" in df_agrupado.columns:
-        cols = [col for col in df_agrupado.columns if col != "Status"] + ["Status"]
-        df_agrupado = df_agrupado[cols]
-    
-    #Converte colunas numéricas para float para ordenar corretamente
-    numeric_cols = ["Media_1o_Trimestre", "Media_2o_Trimestre", "Media_3o_Trimestre", "Media_Total",
-                    "Desvio_1o_Trimestre", "Desvio_2o_Trimestre", "Desvio_3o_Trimestre", "Desvio_Total"]
-    for col in numeric_cols:
-        if col in df_agrupado.columns:
-            df_agrupado[col] = pd.to_numeric(df_agrupado[col], errors='coerce')
-    
-    #Ordena por Media_Total
-    if "Media_Total" in df_agrupado.columns:
-        df_agrupado = df_agrupado.sort_values(by="Media_Total", ascending=False).reset_index(drop=True)
-    else:
-        print("Coluna Media_Total não encontrada — ordenação não realizada.")
-
-    # Salva como novo arquivo
-    df_agrupado.to_csv(caminho_saida, index=False, encoding="utf-8-sig")
-    print(f"Arquivo criado/atualizado: {caminho_saida}")
+    with zipfile.ZipFile(caminho_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
+        zipf.write(
+            caminho_saida,
+            arcname=os.path.basename(caminho_saida)
+        )
+    print(f"Arquivo compactado criado: {caminho_zip}")

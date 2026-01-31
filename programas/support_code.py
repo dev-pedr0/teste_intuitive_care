@@ -169,13 +169,26 @@ def registrar_erros(erros, caminho_erros):
         print(f"{len(df_erros_novos)} erro(s) registrado(s).")
         return
     
-    # Se existir, carrega e compara
-    df_erros_existentes = pd.read_csv(caminho_erros, sep=";", dtype=str).fillna("")
+    #Acessa arquivo
+    try:
+        df_erros_existentes = pd.read_csv(caminho_erros, sep=";", dtype=str).fillna("")
+    except pd.errors.EmptyDataError:
+        # Caso raro: tem tamanho >0 mas pandas não lê (ex: só espaços), sobrescreve o arquivo
+        print("Arquivo existente parece vazio ou corrompido → sobrescrevendo.")
+        df_erros_novos.to_csv(caminho_erros, sep=";", index=False, encoding="utf-8-sig")
+        return
+    except Exception as e:
+        print(f"Erro inesperado ao ler arquivo de erros: {e}")
+        return
 
-    # Concatena e remove duplicados
-    df_final = pd.concat([df_erros_existentes, df_erros_novos], ignore_index=True)
+    # Concatena os erros existentes e novos
+    df_final = pd.concat([df_erros_existentes, df_erros_novos], ignore_index=True).fillna("")
+
+    # Remove duplicatas considerando TODAS as colunas
     df_final = df_final.drop_duplicates()
+
     novos = len(df_final) - len(df_erros_existentes)
+    
     if novos > 0:
         df_final.to_csv(
             caminho_erros,
