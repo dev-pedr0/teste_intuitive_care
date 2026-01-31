@@ -57,22 +57,13 @@ Após o registro de todos os erros identificados, esses registros são comparado
 Por fim, o arquivo consolidado_despesas.csv é atualizado com a coluna Status, refletindo o resultado das validações realizadas.
 Trade-off técnico: essa abordagem prioriza a transparência e a auditabilidade dos dados, ao custo de um possível aumento de retrabalho manual. No entanto, esse retrabalho tende a diminuir ao longo do tempo, à medida que ações específicas passam a ser definidas para cada tipo de inconsistência identificada. Ainda assim, manter um registro separado dos dados originais com erro é fundamental para garantir rastreabilidade e permitir análises futuras.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Atividade 2.2:
-O programa acessa os arquivos baixados da atividade 1.3 de operadoras ativas e canceladas para buscar as novas colunas a serem adicionadas no arquivo "despesas_consolidadas.csv". Não haverá problemas com CNPJ, pois os mesmos foram identificados no exercício anterior. CNPJ não identificados são marcados como NOK e é adicionada uma linha no arquivo de erros para verificação manual. Novamente como a modificação ou eliminação de dados oficiais da ANS pode prejudicar analises futuras os valores são matidos como estão e suas inconsistencias documentadas até que seja possível haver um padronização de como lidar com cada tipo de inconsistencia. Este programa lê os dois arquivos de operadors buscando as colunas desejadas para a dição, além do arquivo já existente de despesas. É criado um data frame com a união das colunas que serão adicionadas além de uma coluna auxiliar que usa CNPJ como a chave de verificação. As colunas desejadas são todas verificadas para sua existencia e caso aja alguma faltante o código informa.
-É criado um segundo data frame para o arquivo de despesas também criando a coluna auxiliar de cnpj. Essas duas colunas são normalizadas da mesma forma para evitar diferenças ligadas a uso de pontos, espaços em branco entre outros.
-Para fazer o join entre os data frames foi escolhido a opção de usar um dicionário que fazr a relação do CNPJ com os outros itens a serem adicionados em despesas. O dicionário foi escolhido como o melhor formato para este caso por ser eficiente em quantidades pequenas de dados (poucos milhares de linhas) e por possuir um tempo de execução para adicionar as novas linhas linear -> O(n). Além disso o mesmo é simples de ser aplicado.
+## Atividade 2.2:
+Objetivo – enriquecer o arquivo "consolidado_despesas.csv" com dados de "RegistroANS", "Modalidade" e "UF". Para isso, são acessados os arquivos "Relatorio_cadop_canceladas.csv" e "Relatorio_cadop.csv", já baixados no exercício anterior.
+Os dois arquivos são lidos. Em cada um deles, são buscadas as colunas desejadas e, em seguida, eles são unidos em um único data frame. O arquivo consolidado também é lido, e ambos os arquivos têm sua coluna de CNPJ normalizada para facilitar a adição de novo conteúdo.
+Se houver CNPJs duplicados no arquivo compilado do Cadop, eles são tratados de duas formas:
+- Se forem CNPJs em que um registro veio do documento de operadoras ativas e outro do documento de operadoras canceladas, o registro ativo é mantido.
+- Se forem CNPJs apenas do documento de operadoras ativas, são utilizados os dados do primeiro registro e é informado um erro de duplicação de CNPJ.
+Além disso, se o CNPJ estiver vazio, a linha é removida e um erro também é registrado. A escolha de remover a linha se deve à poluição do conjunto de dados com valores NaN, visto que o CNPJ é a chave para buscar as novas colunas a serem adicionadas. Ainda assim, o caso é documentado para tratamento manual posterior mais robusto.
+É feito um join, ou seja, a adição das colunas ocorre por meio de um merge direto. Essa estratégia foi escolhida por ser adequada ao volume estimado de dados (poucos milhares de registros), oferecer boa legibilidade, manutenção simples e desempenho satisfatório, além de preservar todos os registros válidos do consolidado de despesas.
+Por fim, as colunas auxiliares são removidas e o arquivo "consolidado_despesas.csv" é sobrescrito com os dados enriquecidos.
+Trade-off técnico: a abordagem de merge direto prioriza a agilidade do processo, além de ser simples e trabalhar bem em conjunto com toda a análise de dados feita anteriormente para eliminação e/ou documentação de erros. Após o tratamento dos dados, não houve necessidade de uma abordagem mais robusta ou complexa para a adição das novas colunas e, portanto, uma solução simples e direta foi preferida.
