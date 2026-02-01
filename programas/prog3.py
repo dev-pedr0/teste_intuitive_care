@@ -15,9 +15,10 @@ def executar():
     while True:
         print("\n=== Atividade 3 ===")
         print("1 - Gerar tabelas")
-        print("2 - Item 3.2")
-        print("3 - Item 3.3")
-        print("4 - Executar tudo")
+        print("2 - Query 1 - maior percentual de despesas por operadora")
+        print("3 - Query 2 - estados com maior valor de despesas")
+        print("4 - Query 3 - operadoras que ultrapassaram sua média de gastos ao menos em 2 trimestres")
+        print("5 - Executar todos")
         print("0 - Sair")
         opcao = input("Escolha: ")
 
@@ -26,14 +27,23 @@ def executar():
                 print("Iniciando geração de Tabelas")
                 gerar_tabelas()
             case "2":
-                print("Iniciando item 3.2")
+                print("Iniciando Query 1")
+                consultar_maiores_percentual_despesas()
             case "3":
-                print("Iniciando item 3.3")
+                print("Iniciando Query 2")
+                consultar_estados_maiores_despesas()
             case "4":
+                print("Iniciando Query 3")
+                consultar_despesas_acima_media()
+            case "5":
                 print("Iniciando geração de Tabelas")
                 gerar_tabelas()
-                print("Iniciando item 3.2")
-                print("Iniciando item 3.3")
+                print("Iniciando Query 1")
+                consultar_maiores_percentual_despesas()
+                print("Iniciando Query 2")
+                consultar_estados_maiores_despesas()
+                print("Iniciando Query 3")
+                consultar_despesas_acima_media()
             case "0":
                 print("Fechando atividade 3")
                 break
@@ -216,7 +226,6 @@ def gerar_tabelas():
             "1º Trimestre": 1,
             "2º Trimestre": 2,
             "3º Trimestre": 3,
-            "4º Trimestre": 4
         }
         df_consolidado["trimestre"] = df_consolidado["Trimestre"].map(mapa_trimestre)
 
@@ -296,7 +305,7 @@ def gerar_tabelas():
             uf CHAR(2),
             status VARCHAR(10),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (cnpj),
+            PRIMARY KEY (cnpj, trimestre),
             INDEX idx_razao_social (razao_social)
         )
         """)
@@ -437,3 +446,274 @@ def gerar_tabelas():
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+#Executa query para operadoras com maior crescimento percentual de despesas entre o primeiro e o último trimestre analisado
+def consultar_maiores_percentual_despesas():
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+
+    # Query 1 — operdoras com dados completos
+    query_completos = """
+    WITH trimestres_periodo AS (
+        SELECT COUNT(DISTINCT trimestre) AS total_trimestres
+        FROM despesas_operadoras
+    ),
+    base AS (
+        SELECT
+            cnpj,
+            razao_social,
+            trimestre,
+            SUM(valor_despesas) AS total_trimestre
+        FROM despesas_operadoras
+        GROUP BY cnpj, razao_social, trimestre
+    ),
+    operadoras_completas AS (
+        SELECT
+            b.cnpj,
+            b.razao_social
+        FROM base b
+        GROUP BY b.cnpj, b.razao_social
+        HAVING COUNT(DISTINCT b.trimestre) = 3
+    ),
+    limites AS (
+        SELECT
+            cnpj,
+            MIN(trimestre) AS primeiro_trimestre,
+            MAX(trimestre) AS ultimo_trimestre
+        FROM base
+        GROUP BY cnpj
+    )
+    SELECT
+        o.cnpj,
+        o.razao_social,
+        b1.total_trimestre AS valor_inicial,
+        b2.total_trimestre AS valor_final,
+        ROUND(
+            ((b2.total_trimestre - b1.total_trimestre) / b1.total_trimestre) * 100,
+            2
+        ) AS crescimento_percentual
+    FROM operadoras_completas o
+    JOIN limites l ON l.cnpj = o.cnpj
+    JOIN base b1
+        ON b1.cnpj = o.cnpj
+    AND b1.trimestre = l.primeiro_trimestre
+    JOIN base b2
+        ON b2.cnpj = o.cnpj
+    AND b2.trimestre = l.ultimo_trimestre
+    ORDER BY crescimento_percentual DESC
+    LIMIT 5;
+    """
+    cursor.execute(query_completos)
+    resultado_completos = cursor.fetchall()
+
+    # Query 2 — operdoras com dados incompletos
+    query_incompletos = """
+    WITH trimestres_periodo AS (
+        SELECT COUNT(DISTINCT trimestre) AS total_trimestres
+        FROM despesas_operadoras
+    ),
+    base AS (
+        SELECT
+            cnpj,
+            razao_social,
+            trimestre,
+            SUM(valor_despesas) AS total_trimestre
+        FROM despesas_operadoras
+        GROUP BY cnpj, razao_social, trimestre
+    ),
+    limites_operadora AS (
+        SELECT
+            b.cnpj,
+            b.razao_social,
+            MIN(b.trimestre) AS primeiro_trimestre,
+            MAX(b.trimestre) AS ultimo_trimestre,
+            COUNT(DISTINCT b.trimestre) AS trimestres_com_dados
+        FROM base b
+        GROUP BY b.cnpj, b.razao_social
+    ),
+    operadoras_incompletas AS (
+        SELECT
+            l.*,
+            (3 - l.trimestres_com_dados) AS trimestres_sem_dados
+        FROM limites_operadora l
+        CROSS JOIN trimestres_periodo tp
+        WHERE l.trimestres_com_dados < 3
+    )
+    SELECT
+        o.cnpj,
+        o.razao_social,
+        b1.total_trimestre AS valor_inicial,
+        b2.total_trimestre AS valor_final,
+        o.trimestres_com_dados,
+        o.trimestres_sem_dados,
+        ROUND(
+            ((b2.total_trimestre - b1.total_trimestre) / b1.total_trimestre) * 100,
+            2
+        ) AS crescimento_percentual
+    FROM operadoras_incompletas o
+    JOIN base b1
+        ON b1.cnpj = o.cnpj
+    AND b1.trimestre = o.primeiro_trimestre
+    JOIN base b2
+        ON b2.cnpj = o.cnpj
+    AND b2.trimestre = o.ultimo_trimestre
+    ORDER BY crescimento_percentual DESC
+    LIMIT 5;
+    """
+    cursor.execute(query_incompletos)
+    resultado_incompletos = cursor.fetchall()
+
+    #Fecha conexões
+    cursor.close()
+    conn.close()
+
+    #Mostra em console
+    print("\n5 operadoras com maior crescimento percentual de despesas (dados completos)")
+    if resultado_completos:
+        for r in resultado_completos:
+            print(r)
+    else:
+        print("Nenhuma operadora com dados completos encontrada.")
+
+    print("\n5 operadoras com maior crescimento percentual de despesas (dados incompletos)")
+    if resultado_incompletos:
+        for r in resultado_incompletos:
+            print(r)
+    else:
+        print("Nenhuma operadora com dados incompletos encontrada.")
+
+    #Retorna dados para uso em outros códigos
+    return {
+        "dados_completos": resultado_completos,
+        "dados_incompletos": resultado_incompletos
+    }
+
+#Executa query para estados com maiores despesas
+def consultar_estados_maiores_despesas():
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+
+    #Realização da query
+    query = """
+    WITH despesas_por_operadora AS (
+        SELECT
+            uf,
+            cnpj,
+            SUM(valor_despesas) AS total_operadora
+        FROM despesas_operadoras
+        WHERE uf IS NOT NULL
+        GROUP BY uf, cnpj
+    ),
+    despesas_por_uf AS (
+        SELECT
+            uf,
+            SUM(total_operadora) AS total_despesas_uf,
+            AVG(total_operadora) AS media_despesas_por_operadora
+        FROM despesas_por_operadora
+        GROUP BY uf
+    )
+    SELECT
+        uf,
+        total_despesas_uf,
+        media_despesas_por_operadora
+    FROM despesas_por_uf
+    ORDER BY total_despesas_uf DESC
+    LIMIT 5;
+    """
+    cursor.execute(query)
+    resultado = cursor.fetchall()
+
+    #Mostra em console
+    print("\n5 estados com maiores despesas:")
+    if resultado:
+        for r in resultado:
+            print(r)
+    else:
+        print("Nenhum estado encontrado")
+
+
+    #Retorna dados para uso em outros códigos
+    return resultado
+
+#Executa query para despesas que ultrapassaram a média por operadora
+def consultar_despesas_acima_media():
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+
+    #Realização da query
+    query = """
+    WITH media_geral_operadora AS (
+        SELECT
+            razao_social,
+            uf,
+            ROUND(
+                (
+                    COALESCE(media_t1, 0) +
+                    COALESCE(media_t2, 0) +
+                    COALESCE(media_t3, 0)
+                ) /
+                (
+                    (media_t1 IS NOT NULL) +
+                    (media_t2 IS NOT NULL) +
+                    (media_t3 IS NOT NULL)
+                ),
+                2
+            ) AS media_geral
+        FROM despesas_agregadas
+    ),
+    comparacao_trimestre AS (
+        SELECT
+            d.cnpj,
+            d.razao_social,
+            d.trimestre,
+            m.media_geral,
+            MAX(
+                CASE
+                    WHEN d.valor_despesas > m.media_geral THEN 1
+                    ELSE 0
+                END
+            ) AS passou_no_trimestre
+        FROM despesas_operadoras d
+        JOIN media_geral_operadora m
+            ON m.razao_social = d.razao_social
+        AND m.uf = d.uf
+        GROUP BY
+            d.cnpj,
+            d.razao_social,
+            d.trimestre,
+            m.media_geral
+    )
+    SELECT
+        razao_social,
+        cnpj,
+        media_geral,
+        SUM(passou_no_trimestre) AS trimestres_acima_da_media
+    FROM comparacao_trimestre
+    GROUP BY
+        razao_social,
+        cnpj,
+        media_geral
+    HAVING SUM(passou_no_trimestre) >= 2
+    ORDER BY trimestres_acima_da_media DESC;
+    """
+    cursor.execute(query)
+    resultado = cursor.fetchall()
+
+    #Soma o total de operadoras que ultrapassaram
+    total_operadoras = len(resultado)
+    
+    #Mostra em console
+    print("\n Registro de ultrapassagem, em pelo menos 2 trimestres, de valor de despesa da média geral por operadora:")
+    if resultado:
+        for r in resultado:
+            print(r)
+        print(f"Total de Operadoras:{total_operadoras}")
+    else:
+        print("Nenhuma registro encontrado")
+
+
+    #Retorna dados para uso em outros códigos
+    return {
+        "resultado": resultado,
+        "total_operadoras": total_operadoras
+    }
