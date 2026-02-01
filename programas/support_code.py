@@ -1,4 +1,5 @@
 from charset_normalizer import detect
+import mysql.connector
 import pandas as pd
 import os
 
@@ -186,9 +187,7 @@ def registrar_erros(erros, caminho_erros):
 
     # Remove duplicatas considerando TODAS as colunas
     df_final = df_final.drop_duplicates()
-
-    novos = len(df_final) - len(df_erros_existentes)
-    
+    novos = len(df_final) - len(df_erros_existentes)    
     if novos > 0:
         df_final.to_csv(
             caminho_erros,
@@ -199,3 +198,13 @@ def registrar_erros(erros, caminho_erros):
         print(f"{novos} erro(s) novo(s) adicionado(s) em {caminho_erros}")
     else:
         print("Nenhum erro novo para adicionar.")
+
+#Conecta ao banco de dados MySQL
+def conectar_banco():
+    return mysql.connector.connect(
+        host="localhost",
+        port=3306,
+        user="root",
+        password="root1234",
+        database="teste_intuitive_care"
+    )

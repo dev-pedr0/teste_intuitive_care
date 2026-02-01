@@ -149,8 +149,14 @@ def atividade22():
             print(f"Lendo: {os.path.basename(caminho)}")
             df_temp = ler_arquivo_com_encoding(caminho)
 
+            # Marca a origem do cadastro
+            if caminho == caminho_ativas:
+                df_temp["StatusCadastro"] = "Ativo"
+            else:
+                df_temp["StatusCadastro"] = "Cancelado"
+
             #Testa para saber se as colunas necessárias existem
-            colunas_desejadas = ["CNPJ", "REGISTRO_OPERADORA", "Modalidade", "UF"]
+            colunas_desejadas = ["CNPJ", "REGISTRO_OPERADORA", "Modalidade", "UF", "StatusCadastro"]
             colunas_existentes = [col for col in colunas_desejadas if col in df_temp.columns]
             if len(colunas_existentes) < len(colunas_desejadas):
                 faltando = set(colunas_desejadas) - set(colunas_existentes)
@@ -171,20 +177,24 @@ def atividade22():
     #Normaliza formato de CNPJ e cria coluna auxiliar CNPJ_norm no data frame do cadop
     df_cadop["CNPJ_norm"] = df_cadop["CNPJ"].str.replace(r"[./-]", "", regex=True).str.lstrip("0")
 
+    #Prioriza CNPJ do cadastro ativo
+    df_cadop["prioridade"] = df_cadop["StatusCadastro"].map({
+        "Ativo": 1,
+        "Cancelado": 0
+    })
+
     # Detecta CNPJs duplicados no cadastro
     duplicados = df_cadop[df_cadop.duplicated(subset="CNPJ_norm", keep=False)]
 
     if not duplicados.empty:
         # Agrupa por CNPJ para verificar divergência de dados
         conflitos = (
-            duplicados
+            duplicados[duplicados["StatusCadastro"] == "Ativo"]
             .groupby("CNPJ_norm")
             .filter(lambda x: x[["REGISTRO_OPERADORA", "Modalidade", "UF"]].nunique().max() > 1)
         )
-
         if not conflitos.empty:
             erros_cadop = []
-
             for cnpj, grupo in conflitos.groupby("CNPJ_norm"):
                 erros_cadop.append({
                     "TipoErro": "CNPJ duplicado no cadastro com dados divergentes",
@@ -202,7 +212,12 @@ def atividade22():
 
             registrar_erros(erros_cadop, caminho_erros)
 
-    df_cadop = df_cadop.drop_duplicates(subset="CNPJ_norm", keep="first")
+    df_cadop = (
+        df_cadop
+        .sort_values("prioridade", ascending=False)
+        .drop_duplicates(subset="CNPJ_norm", keep="first")
+        .drop(columns="prioridade")
+    )
 
     #Normaliza CNPJ no arquivo de despesas e força seu formato em string
     df_despesas["CNPJ"] = (
@@ -248,6 +263,8 @@ def atividade22():
 
     #Elimina coluna auxiliar
     df_despesas = df_despesas.drop(columns=["CNPJ_norm"], errors="ignore")
+    df_cadop = df_cadop.drop(columns=["CNPJ_norm"], errors="ignore")
+
 
     #Mantém a coluna status com ultima coluna
     if "Status" in df_despesas.columns:
@@ -257,6 +274,15 @@ def atividade22():
     #Sobrescreve arquivo original
     df_despesas.to_csv(caminho_despesas, index=False, encoding="utf-8-sig")
     print(f"Arquivo atualizado: {caminho_despesas}")
+
+    #Cria arquivo de cadastro normalizado para atividades futuras
+    caminho_saida_cadop = os.path.join(PASTA_NORMALIZADOS, "cadastro_operadoras.csv")
+    df_cadop.to_csv(
+        caminho_saida_cadop,
+        index=False,
+        encoding="utf-8-sig"
+    )
+    print(f"Cadastro de operadoras normalizado salvo em: {caminho_saida_cadop}")
 
 #Atividade 2.3
 def atividade23():
