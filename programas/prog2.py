@@ -302,6 +302,11 @@ def atividade23():
     # Garante tipos numéricos para cálculos estatísticos
     df["ValorDespesas"] = pd.to_numeric(df["ValorDespesas"], errors="coerce")
 
+
+    # Normaliza RazaoSocial e UF
+    df["RazaoSocial"] = df["RazaoSocial"].astype(str).str.strip().str.upper()  # Remove espaços extras e converte para maiúsculas
+    df["UF"] = df["UF"].astype(str).str.strip().str.upper()
+
     #Validação e verificação de erros
     erros = []
     linhas_para_remover = [] 

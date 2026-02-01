@@ -185,8 +185,7 @@ def registrar_erros(erros, caminho_erros):
     # Concatena os erros existentes e novos
     df_final = pd.concat([df_erros_existentes, df_erros_novos], ignore_index=True).fillna("")
 
-    # Remove duplicatas considerando TODAS as colunas
-    df_final = df_final.drop_duplicates()
+    #Adiciona erros novos
     novos = len(df_final) - len(df_erros_existentes)    
     if novos > 0:
         df_final.to_csv(
