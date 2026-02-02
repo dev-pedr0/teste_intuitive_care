@@ -1,5 +1,8 @@
 {
   "scripts": {
     "frontend": "cd programas/prog4/frontend/web-page && npm run dev"
+  },
+  "dependencies": {
+    "vue-router": "^5.0.2"
   }
 }
