@@ -165,3 +165,191 @@ def historico_despesas(cnpj: str):
         "total_registros": len(despesas),
         "despesas": despesas
     }
+
+#Rota que mostra estatísticas gerais
+@app.get("/api/estatisticas")
+def obter_estatisticas():
+    conn = conectar_banco()
+    cursor = conn.cursor(dictionary=True)
+
+    #Top 5 operadoras co maior crescimento percentual de despesas com dados completos
+    query_completos = """
+    WITH base AS (
+        SELECT
+            cnpj,
+            razao_social,
+            trimestre,
+            SUM(valor_despesas) AS total_trimestre
+        FROM despesas_operadoras
+        GROUP BY cnpj, razao_social, trimestre
+    ),
+    operadoras_completas AS (
+        SELECT
+            cnpj,
+            razao_social
+        FROM base
+        GROUP BY cnpj, razao_social
+        HAVING COUNT(DISTINCT trimestre) = 3
+    ),
+    limites AS (
+        SELECT
+            cnpj,
+            MIN(trimestre) AS primeiro_trimestre,
+            MAX(trimestre) AS ultimo_trimestre
+        FROM base
+        GROUP BY cnpj
+    )
+    SELECT
+        o.cnpj,
+        o.razao_social,
+        b1.total_trimestre AS valor_inicial,
+        b2.total_trimestre AS valor_final,
+        ROUND(
+            ((b2.total_trimestre - b1.total_trimestre) / b1.total_trimestre) * 100,
+            2
+        ) AS crescimento_percentual
+    FROM operadoras_completas o
+    JOIN limites l ON l.cnpj = o.cnpj
+    JOIN base b1 ON b1.cnpj = o.cnpj AND b1.trimestre = l.primeiro_trimestre
+    JOIN base b2 ON b2.cnpj = o.cnpj AND b2.trimestre = l.ultimo_trimestre
+    ORDER BY crescimento_percentual DESC
+    LIMIT 5;
+    """
+    cursor.execute(query_completos)
+    completos = cursor.fetchall()
+
+    #Top 5 operadoras co maior crescimento percentual de despesas com dados incompletos
+    query_incompletos = """
+    WITH base AS (
+        SELECT
+            cnpj,
+            razao_social,
+            trimestre,
+            SUM(valor_despesas) AS total_trimestre
+        FROM despesas_operadoras
+        GROUP BY cnpj, razao_social, trimestre
+    ),
+    limites_operadora AS (
+        SELECT
+            cnpj,
+            razao_social,
+            MIN(trimestre) AS primeiro_trimestre,
+            MAX(trimestre) AS ultimo_trimestre,
+            COUNT(DISTINCT trimestre) AS trimestres_com_dados
+        FROM base
+        GROUP BY cnpj, razao_social
+        HAVING COUNT(DISTINCT trimestre) < 3
+    )
+    SELECT
+        o.cnpj,
+        o.razao_social,
+        b1.total_trimestre AS valor_inicial,
+        b2.total_trimestre AS valor_final,
+        o.trimestres_com_dados,
+        (3 - o.trimestres_com_dados) AS trimestres_sem_dados,
+        ROUND(
+            ((b2.total_trimestre - b1.total_trimestre) / b1.total_trimestre) * 100,
+            2
+        ) AS crescimento_percentual
+    FROM limites_operadora o
+    JOIN base b1 ON b1.cnpj = o.cnpj AND b1.trimestre = o.primeiro_trimestre
+    JOIN base b2 ON b2.cnpj = o.cnpj AND b2.trimestre = o.ultimo_trimestre
+    ORDER BY crescimento_percentual DESC
+    LIMIT 5;
+    """
+    cursor.execute(query_incompletos)
+    incompletos = cursor.fetchall()
+
+    #Top 5 estados com maiores despesas
+    query_estados = """
+    WITH despesas_por_operadora AS (
+        SELECT
+            uf,
+            cnpj,
+            SUM(valor_despesas) AS total_operadora
+        FROM despesas_operadoras
+        WHERE uf IS NOT NULL
+        GROUP BY uf, cnpj
+    ),
+    despesas_por_uf AS (
+        SELECT
+            uf,
+            SUM(total_operadora) AS total_despesas_uf,
+            AVG(total_operadora) AS media_despesas_por_operadora
+        FROM despesas_por_operadora
+        GROUP BY uf
+    )
+    SELECT
+        uf,
+        total_despesas_uf,
+        media_despesas_por_operadora
+    FROM despesas_por_uf
+    ORDER BY total_despesas_uf DESC
+    LIMIT 5;
+    """
+    cursor.execute(query_estados)
+    estados = cursor.fetchall()
+
+    #Operadoras cusjo gasto ultrapassou sua média trimestral
+    query_acima_media = """
+    WITH media_geral_operadora AS (
+        SELECT
+            razao_social,
+            uf,
+            ROUND(
+                (
+                    COALESCE(media_t1, 0) +
+                    COALESCE(media_t2, 0) +
+                    COALESCE(media_t3, 0)
+                ) /
+                (
+                    (media_t1 IS NOT NULL) +
+                    (media_t2 IS NOT NULL) +
+                    (media_t3 IS NOT NULL)
+                ),
+                2
+            ) AS media_geral
+        FROM despesas_agregadas
+    ),
+    comparacao AS (
+        SELECT
+            d.cnpj,
+            d.razao_social,
+            d.trimestre,
+            m.media_geral,
+            CASE
+                WHEN d.valor_despesas > m.media_geral THEN 1
+                ELSE 0
+            END AS passou
+        FROM despesas_operadoras d
+        JOIN media_geral_operadora m
+            ON m.razao_social = d.razao_social
+           AND m.uf = d.uf
+    )
+    SELECT
+        razao_social,
+        cnpj,
+        media_geral,
+        SUM(passou) AS trimestres_acima_da_media
+    FROM comparacao
+    GROUP BY razao_social, cnpj, media_geral
+    HAVING SUM(passou) >= 2
+    ORDER BY trimestres_acima_da_media DESC;
+    """
+    cursor.execute(query_acima_media)
+    acima_media = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return {
+        "crescimento_despesas": {
+            "dados_completos": completos,
+            "dados_incompletos": incompletos
+        },
+        "estados_maiores_despesas": estados,
+        "operadoras_acima_media": {
+            "total": len(acima_media),
+            "lista": acima_media
+        }
+    }
