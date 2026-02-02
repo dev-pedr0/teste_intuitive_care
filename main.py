@@ -1,4 +1,4 @@
-from programas import prog1, prog2, prog3, prog4
+from programas import prog1, prog2, prog3
 
 # Função de menu
 def menu():
@@ -19,7 +19,7 @@ def menu():
             case "3":
                 prog3.executar()
             case "4":
-                prog4.executar()
+                print("Aguarde...")
             case "0":
                 print("Saindo...")
                 break
