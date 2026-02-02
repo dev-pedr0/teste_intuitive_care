@@ -295,6 +295,7 @@ def gerar_tabelas():
         print("\nCriando tabela de despesas consolidadas")
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS despesas_operadoras (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
             cnpj CHAR(14) NOT NULL,
             razao_social VARCHAR(255) NOT NULL,
             trimestre TINYINT NOT NULL,
@@ -305,10 +306,11 @@ def gerar_tabelas():
             uf CHAR(2),
             status VARCHAR(10),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (cnpj, trimestre),
-            INDEX idx_razao_social (razao_social)
+            INDEX idx_cnpj (cnpj),
+            INDEX idx_cnpj_ano_trimestre (cnpj, ano, trimestre)
         )
         """)
+
         cursor.execute("TRUNCATE TABLE despesas_operadoras")
         print("Tabela criada com sucesso!")
 
@@ -358,12 +360,10 @@ def gerar_tabelas():
             valor_despesas,
             registro_ans,
             modalidade,
+
             uf,
             status
         ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ON DUPLICATE KEY UPDATE
-            valor_despesas = VALUES(valor_despesas),
-            status = VALUES(status)
         """
         dados = [
             (
