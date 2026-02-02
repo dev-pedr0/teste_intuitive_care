@@ -1,10 +1,14 @@
 from charset_normalizer import detect
+from dotenv import load_dotenv
 import mysql.connector
 import pandas as pd
 import os
 
 #Arquivo connversor de registro ans para cnpj e razão social
 MAPA_REGISTRO = None
+
+#Roda o .env
+load_dotenv()
 
 #Leitura correta de arquivo usando extensão e enconding correto
 def ler_arquivo_com_encoding(caminho, max_bytes=200_000):
@@ -201,9 +205,10 @@ def registrar_erros(erros, caminho_erros):
 #Conecta ao banco de dados MySQL
 def conectar_banco():
     return mysql.connector.connect(
-        host="localhost",
-        port=3306,
-        user="root",
-        password="root1234",
-        database="teste_intuitive_care"
+        host=os.getenv("DB_HOST"),
+        port=int(os.getenv("DB_PORT")),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME"),
+        connection_timeout=5
     )
