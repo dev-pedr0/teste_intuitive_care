@@ -85,6 +85,59 @@ footer {
   height: 100vh;
 }
 
+/*Página de lista*/
+.operadoras {
+  max-width: 800px;
+  margin: auto;
+}
+
+.operadora-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.status {
+  font-size: 0.85rem;
+}
+
+.status.ativo {
+  color: green;
+}
+
+.status.inativo {
+  color: red;
+}
+
+.acoes {
+  min-width: 180px;
+}
+
+.acoes button {
+  margin-left: 8px;
+}
+
+.paginacao {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.filtros {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
 
 /* Página de Estatísticas */
 .stats-page section {

@@ -7,8 +7,8 @@ import Costs from "@/pages/Costs.vue";
 const routes = [
   { path: "/", component: Companies },
   { path: "/estatisticas", component: Statistics },
-  { path: "/detalhes/:id", component: Details },
-  { path: "/despesas/:id", component: Costs },
+  { path: "/detalhes/:cnpj", component: Details },
+  { path: "/despesas/:cnpj", component: Costs },
 ];
 
 export default createRouter({

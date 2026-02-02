@@ -1,13 +1,28 @@
 from fastapi import FastAPI, HTTPException, Query
 from db import conectar_banco
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="API Operadoras de Saúde")
+
+#header de requisições
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 #Rota de lista de operadoras
 @app.get("/api/operadoras")
 def listar_operadoras(
     page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100)
+    limit: int = Query(10, ge=1, le=100),
+    status: str | None = Query(None),
+    search: str | None = Query(None)
 ):
     #Páginas
     offset = (page - 1) * limit
@@ -16,19 +31,45 @@ def listar_operadoras(
     conn = conectar_banco()
     cursor = conn.cursor(dictionary=True)
 
-    #Total de registros
-    cursor.execute("SELECT COUNT(*) AS total FROM cadastro_operadoras")
+    #Filtros
+    filtros = []
+    params = []
+    if status:
+        filtros.append("c.status_cadastro = %s")
+        params.append(status)
+    if search:
+        filtros.append("""
+        (
+            c.cnpj LIKE %s
+            OR d.razao_social LIKE %s
+        )
+        """)
+        params.extend([f"%{search}%", f"%{search}%"])
+    where_clause = ""
+    if filtros:
+        where_clause = "WHERE " + " AND ".join(filtros)
+
+    # Total de registros com razão social
+    cursor.execute(f"""
+        SELECT COUNT(DISTINCT c.cnpj) AS total
+        FROM cadastro_operadoras c
+        JOIN despesas_operadoras d ON d.cnpj = c.cnpj
+        {where_clause}
+    """, params)
     total = cursor.fetchone()["total"]
 
     #Dados paginados
-    cursor.execute(
-        """
-        SELECT cnpj, registro_operadora, modalidade, uf, status_cadastro
-        FROM cadastro_operadoras
+    cursor.execute(f"""
+        SELECT DISTINCT
+            c.cnpj,
+            d.razao_social,
+            c.status_cadastro
+        FROM cadastro_operadoras c
+        JOIN despesas_operadoras d ON d.cnpj = c.cnpj
+        {where_clause}
+        ORDER BY d.razao_social ASC
         LIMIT %s OFFSET %s
-        """,
-        (limit, offset)
-    )
+    """, params + [limit, offset])
     operadoras = cursor.fetchall()
 
     #Desconecta
