@@ -1,39 +1,40 @@
 # Disclaimer:
-Para a realização das atividades aqui presentes, foi utilizada a ajuda de duas IAs: ChatGPT e Grok. Ambas foram utilizadas para acelerar a busca de informações pela internet e auxiliar na criação de modelos de código para modificação e adição ao código oficial. Nenhum código presente foi puramente feito por inteligência artificial; a combinação entre o indivíduo (eu — Pedro) e essa tecnologia foi o que permitiu a realização das atividades da forma como se encontram.
+Para a realização das atividades aqui apresentadas, foi utilizada a ajuda de duas IAs: ChatGPT e Grok. Ambas foram empregadas para acelerar a busca de informações na internet e auxiliar na criação de modelos de código para modificação e adição ao código oficial. Nenhum código presente foi feito puramente por inteligência artificial; a combinação entre o indivíduo (eu — Pedro) e essa tecnologia foi o que permitiu a realização das atividades da forma como se encontram.
 
 # Utilização:
-Antes de inicializar o código, verifique se existe alguma pasta ou arquivo dentro da pasta documents. Caso exista e você queira testar o programa por completo, apague tudo dentro dessa pasta. Todas as pastas e arquivos em documents serão criados durante a execução dos códigos.
+Antes de inicializar o código, verifique se existe alguma pasta ou arquivo dentro da pasta documents. Caso exista e você queira testar o programa por completo, apague tudo dentro dessa pasta. Todas as pastas e arquivos em documents serão criados durante a execução do código.
 Para executar o programa, baixe uma cópia do mesmo e coloque os arquivos em uma pasta. Abra o arquivo principal main.py em qualquer IDE e execute, no terminal, o comando python main.py. O terminal exibirá um menu para a execução de todas as atividades, e cada atividade possui um menu próprio para executar suas partes individualmente ou de forma completa.
 
-# Documentação:
+# Documentação
 
 ### main.py:
 O arquivo main.py serve como um menu geral para acessar todas as atividades. Ele foi desenvolvido dessa forma para proporcionar um controle simples, porém efetivo, permitindo acessar cada atividade sem a necessidade de reiniciar o programa.
 
-## prog1:
-Para a realização de todos os pontos da atividade 1, foi necessário criar variáveis globais para os caminhos das diferentes pastas que seriam utilizadas, além de gerar essas pastas automaticamente. Essa divisão de pastas foi escolhida para melhorar a organização dos arquivos, visto que existe uma série de arquivos que são baixados, modificados e gerados pelo código.
+## prog1
+Para a realização de todos os pontos da Atividade 1, foi necessário criar variáveis globais para os caminhos das diferentes pastas que seriam utilizadas, além de gerar essas pastas automaticamente. Essa divisão de pastas foi escolhida para melhorar a organização dos arquivos, visto que há uma série de arquivos que são baixados, modificados e gerados pelo código.
 
 ### Atividade 1.1:
 O objetivo da atividade é adquirir as demonstrações contábeis dos três últimos trimestres disponibilizados pela ANS.
-O código acessa a API no endereço https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/ e busca todos os links disponíveis. São identificados os links que seguem exatamente o formato YYYY/, padrão utilizado para representar os anos na URL indicada.
-Todos os links referentes aos anos são armazenados em ordem decrescente e, para cada um deles, são buscados os arquivos correspondentes aos trimestres. Foi desenvolvido um filtro capaz de aceitar diferentes padrões de nomenclatura dos arquivos trimestrais. Exemplos de nomes aceitos incluem: 
+O código acessa a API no endereço https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/
+e busca todos os links disponíveis. São identificados os links que seguem exatamente o formato YYYY/, padrão utilizado para representar os anos na URL indicada.
+Todos os links referentes aos anos são armazenados em ordem decrescente e, para cada um deles, são buscados os arquivos correspondentes aos trimestres. Foi desenvolvido um filtro capaz de aceitar diferentes padrões de nomenclatura dos arquivos trimestrais. Exemplos de nomes aceitos incluem:
 - 1T2025,
-- 2025_2_trimestre
-- 1_trimestre.
+- 2025_2_trimestre,
+- 1_trimestre,
 Cada arquivo encontrado passa por esse filtro e pela verificação de extensão, sendo considerados apenas arquivos no formato .zip, já que todas as demonstrações trimestrais de despesas são disponibilizadas nesse formato. Caso o arquivo atenda aos critérios, o seu caminho é adicionado a uma variável de controle. Após a identificação de três arquivos válidos, o sistema interrompe a busca por novos arquivos. Os arquivos selecionados são organizados em ordem decrescente, do trimestre mais recente para o mais antigo.
 Os caminhos dos três arquivos selecionados também são armazenados em uma variável global chamada ARQUIVOS_ESPERADOS, indicando a existência dos arquivos trimestrais desejados.
-Por fim, cada caminho de arquivo é acessado e a conexão com a URL é verificada. O nome do arquivo é extraído da URL e é verificado se já existe um arquivo com o mesmo nome na pasta de downloads. Caso não exista, o arquivo é baixado para a pasta downloads.
+Por fim, cada caminho de arquivo é acessado e a conexão com a URL é verificada. O nome do arquivo é extraído da URL, e é verificado se já existe um arquivo com o mesmo nome na pasta downloads. Caso não exista, o arquivo é baixado para essa pasta.
 
 ### Atividade 1.2:
 O objetivo da atividade é acessar e processar os arquivos de despesas dos três últimos trimestres, especificamente em relação ao tipo de despesa “Despesas com Eventos / Sinistros”.
 Para isso, foi definido que os arquivos originais não seriam modificados. Em vez disso, é criado um novo arquivo chamado dados_normalizados.csv.
 O programa utiliza a variável global ARQUIVOS_ESPERADOS e verifica se os arquivos .zip desejados já estão presentes na pasta downloads. Caso não estejam, eles são baixados automaticamente. Em seguida, os arquivos .zip são extraídos integralmente para a pasta extraidos/.
-Dentro dessa pasta, o programa busca arquivos que sigam o padrão X T YYYY, onde X é um número de um a quatro e YYYY representa o ano. Esse padrão foi identificado em todos os arquivos de despesas disponibilizados pela ANS.
+Dentro dessa pasta, o programa busca arquivos que sigam o padrão X T YYYY, em que X é um número de um a quatro e YYYY representa o ano. Esse padrão foi identificado em todos os arquivos de despesas disponibilizados pela ANS.
 Cada arquivo que passa por esse filtro é lido por meio de uma função auxiliar, que testa sua extensão e o encoding para garantir a leitura correta. Em seguida, é realizada a busca pela coluna chamada DESCRICAO. Caso essa coluna não seja encontrada, o programa verifica se a terceira coluna contém dados textuais. Se ainda assim não for identificada uma coluna adequada, é aplicado um filtro mais abrangente, que percorre todas as colunas em busca de uma coluna que contenha texto.
-Após identificar a coluna correta, é buscado o texto exato “Despesas com Eventos / Sinistros”. O uso do texto exato foi uma decisão técnica, pois esse valor está presente de forma consistente em todos os documentos analisados, enquanto existem outras linhas que contêm apenas as palavras “evento” ou “sinistro” isoladamente. Dessa forma, considerou-se que o texto exato representa corretamente o padrão desejado para identificação do tipo de despesa.
+Após identificar a coluna correta, é buscado o texto exato “Despesas com Eventos / Sinistros”. O uso do texto exato foi uma decisão técnica, pois esse valor está presente de forma consistente em todos os documentos analisados, enquanto existem outras linhas que contêm apenas as palavras “evento” ou “sinistro” isoladamente. Dessa forma, considerou-se que o texto exato representa corretamente o padrão desejado para a identificação do tipo de despesa.
 As linhas que atendem a esse critério são adicionadas à variável linhas_normalizadas. Após o processamento de todos os arquivos, os dados armazenados nessa variável passam por uma etapa de normalização: as linhas filtradas são concatenadas em um único DataFrame, as colunas são renomeadas para facilitar o entendimento, os valores monetários são convertidos (substituição de vírgula por ponto e conversão para float), e são criadas colunas derivadas de mês e ano a partir da data de referência presente nos documentos.
 Por fim, o DataFrame resultante é salvo como dados_normalizados.csv na pasta normalizados/.
-Trade-off técnico: foi escolhida a estratégia de processamento em memória, na qual todas as linhas desejadas são carregadas e concatenadas em uma única estrutura antes da normalização. Considerando que o tamanho total dos três arquivos trimestrais é relativamente pequeno (inferior a 1 GB) em relação ao poder computacional disponível, essa abordagem foi considerada adequada e eficiente, sem impacto significativo no uso de memória. Em um cenário em que fosse necessário processar um volume maior de arquivos ou incluir outros tipos de despesas além de “Despesas com Eventos / Sinistros”, seria recomendável avaliar uma estratégia alternativa, processando cada arquivo individualmente e unindo os dados já tratados ao final.
+Trade-off técnico: foi escolhida a estratégia de processamento em memória, na qual todas as linhas desejadas são carregadas e concatenadas em uma única estrutura antes da normalização. Considerando que o tamanho total dos três arquivos trimestrais é relativamente pequeno (inferior a 1 GB) em relação ao poder computacional disponível, essa abordagem foi considerada adequada e eficiente, sem impacto significativo no uso de memória. Em um cenário no qual fosse necessário processar um volume maior de arquivos ou incluir outros tipos de despesas além de “Despesas com Eventos / Sinistros”, seria recomendável avaliar uma estratégia alternativa, processando cada arquivo individualmente e unindo os dados já tratados ao final.
 
 ### Atividade 1.3:
 O objetivo do programa é gerar um documento chamado consolidado_despesas.csv, unificando os dados dos três trimestres disponíveis. Para isso, é utilizado o arquivo normalizado dados_normalizados.csv, além da criação de um arquivo auxiliar responsável por converter registro ANS em CNPJ e razão social, denominado mapa_registro_ans_cnpj.csv. Para o registro de erros e inconsistências identificadas durante o processamento, foi criado o arquivo consolidado_despesas_erros.csv.
@@ -43,127 +44,132 @@ Durante a consolidação, é realizada a verificação de CNPJs duplicados. CNPJ
 Na sequência, o programa lê o arquivo dados_normalizados.csv, gerado na atividade anterior, e cria um novo DataFrame. É utilizada a função auxiliar buscar_cnpj_razao para converter o registro ANS presente nos dados normalizados em CNPJ e razão social. Essa função, por sua vez, utiliza a função carregar_mapa_conversor, cujo objetivo é carregar o arquivo CSV do mapa de conversão apenas uma vez e armazená-lo em uma variável global, evitando sobrecarga e atrasos decorrentes de múltiplas leituras do mesmo arquivo.
 São então criadas as colunas CNPJ e RazaoSocial. O campo Ano é obtido diretamente do arquivo normalizado, enquanto o Trimestre é calculado a partir do número do mês, sendo convertido para o trimestre correspondente. A coluna ValorDespesas é calculada a partir da diferença entre o valor final e o valor inicial, representando o montante efetivo de despesas (ou variações financeiras) no período analisado.
 Durante essa etapa, são identificados valores zerados e negativos. Valores zerados são removidos do arquivo final por não representarem movimentação financeira relevante, mas são devidamente registrados no arquivo de erros para fins de rastreabilidade. Já os valores negativos não são descartados automaticamente; eles são mantidos no conjunto de erros com uma marcação específica, pois podem ocorrer legitimamente em situações como reversão de provisões. A decisão de apenas sinalizá-los, e não eliminá-los, segue uma abordagem conservadora, reconhecendo que uma validação definitiva exigiria uma análise estatística mais aprofundada, considerando frequência, distribuição e concentração desses valores ao longo do tempo.
-Todos os erros e inconsistências identificados são documentados no arquivo consolidado_despesas_erros.csv. Após o tratamento e a documentação dessas ocorrências, o arquivo consolidado_despesas.csv é gerado contendo as colunas exigidas no enunciado: CNPJ, RazaoSocial, Trimestre, Ano e ValorDespesas, com os dados consolidados dos três trimestres. Por fim, esse arquivo é compactado no formato ZIP com o nome consolidado_despesas.zip, conforme solicitado.
+Todos os erros e inconsistências identificados são documentados no arquivo consolidado_despesas_erros.csv. Após o tratamento e a documentação dessas ocorrências, o arquivo consolidado_despesas.csv é gerado contendo as colunas exigidas no enunciado — CNPJ, RazaoSocial, Trimestre, Ano e ValorDespesas — com os dados consolidados dos três trimestres. Por fim, esse arquivo é compactado no formato ZIP com o nome consolidado_despesas.zip, conforme solicitado.
 
-## Prog 2
+## prog2
 ### Atividade 2.1
-O objetivo desta etapa é tratar com maior nível de detalhe os erros presentes no arquivo consolidado_despesas.csv. Todas as inconsistências identificadas são registradas no arquivo consolidado_despesas_erros.csv.
+O objetivo desta etapa é tratar, com maior nível de detalhe, os erros presentes no arquivo consolidado_despesas.csv. Todas as inconsistências identificadas são registradas no arquivo consolidado_despesas_erros.csv.
 Para facilitar a identificação de linhas problemáticas, é criada a coluna Status, que recebe os valores "OK" ou "NOK". O valor "NOK" indica que existe pelo menos uma inconsistência associada àquela linha.
 São realizadas as seguintes validações:
 - Verificação de CNPJ, por meio da função auxiliar cnpj_valido, que verifica a existência do valor, o tamanho correto, a presença apenas de números, a ocorrência de sequências com todos os dígitos iguais e valida os dígitos verificadores utilizando o algoritmo oficial do CNPJ.
 - Verificação da Razão Social, garantindo que o campo esteja devidamente preenchido.
-- Verificação de ValorDespesas, repetindo as mesmas validações realizadas no exercício 1.3. Essa redundância foi adotada para atender explicitamente aos requisitos da atividade.
-Assim como nas etapas anteriores, apenas as linhas com ValorDespesas zerado são removidas do arquivo principal e devidamente documentadas no arquivo de erros. Todas as demais inconsistências são apenas registradas, sem remoção dos dados, com o objetivo de preservar a informação até que seja possível definir uma estratégia adequada de tratamento, evitando a perda de dados que ainda possam ser validados ou corrigidos.
+- Verificação de ValorDespesas, repetindo as mesmas validações realizadas na Atividade 1.3. Essa redundância foi adotada para atender explicitamente aos requisitos da atividade.
+Assim como nas etapas anteriores, apenas as linhas com ValorDespesas zerado são removidas do arquivo principal e devidamente documentadas no arquivo de erros. Caso aja uma linha sem cnpj ou razão social essa linha é removida pela dificuldade da identificação da empresa e prejuízo nos tratamentos futuros.
+Todas as demais inconsistências são apenas registradas, sem remoção dos dados, com o objetivo de preservar a informação até que seja possível definir uma estratégia adequada de tratamento, evitando a perda de dados que ainda possam ser validados ou corrigidos.
 Após o registro de todos os erros identificados, esses registros são comparados com os itens já existentes no arquivo consolidado_despesas_erros.csv, sendo adicionados apenas aqueles que ainda não constam no arquivo, evitando duplicidades em execuções múltiplas do programa.
 Por fim, o arquivo consolidado_despesas.csv é atualizado com a coluna Status, refletindo o resultado das validações realizadas.
 Trade-off técnico: essa abordagem prioriza a transparência e a auditabilidade dos dados, ao custo de um possível aumento de retrabalho manual. No entanto, esse retrabalho tende a diminuir ao longo do tempo, à medida que ações específicas passam a ser definidas para cada tipo de inconsistência identificada. Ainda assim, manter um registro separado dos dados originais com erro é fundamental para garantir rastreabilidade e permitir análises futuras.
 
 ### Atividade 2.2:
-O objetivo foi enriquecer o arquivo "consolidado_despesas.csv" com dados de "RegistroANS", "Modalidade" e "UF". Para isso, são acessados os arquivos "Relatorio_cadop_canceladas.csv" e "Relatorio_cadop.csv", já baixados no exercício anterior.
-Os dois arquivos são lidos. Em cada um deles, são buscadas as colunas desejadas e, em seguida, eles são unidos em um único data frame. O arquivo consolidado também é lido, e ambos os arquivos têm sua coluna de CNPJ normalizada para facilitar a adição de novo conteúdo.
-Se houver CNPJs duplicados no arquivo compilado do Cadop, eles são tratados de duas formas:
+O objetivo foi enriquecer o arquivo consolidado_despesas.csv com os dados de RegistroANS, Modalidade e UF. Para isso, são acessados os arquivos Relatorio_cadop_canceladas.csv e Relatorio_cadop.csv, já baixados no exercício anterior.
+Os dois arquivos são lidos e, em cada um deles, são buscadas as colunas desejadas. Em seguida, eles são unidos em um único DataFrame. O arquivo consolidado também é lido, e ambos os conjuntos de dados têm a coluna de CNPJ normalizada para facilitar a adição de novo conteúdo.
+Caso existam CNPJs duplicados no arquivo compilado do Cadop, eles são tratados de duas formas:
 - Se forem CNPJs em que um registro veio do documento de operadoras ativas e outro do documento de operadoras canceladas, o registro ativo é mantido.
-- Se forem CNPJs apenas do documento de operadoras ativas, são utilizados os dados do primeiro registro e é informado um erro de duplicação de CNPJ.
-Além disso, se o CNPJ estiver vazio, a linha é removida e um erro também é registrado. A escolha de remover a linha se deve à poluição do conjunto de dados com valores NaN, visto que o CNPJ é a chave para buscar as novas colunas a serem adicionadas. Ainda assim, o caso é documentado para tratamento manual posterior mais robusto.
-É feito um join, ou seja, a adição das colunas ocorre por meio de um merge direto. Essa estratégia foi escolhida por ser adequada ao volume estimado de dados (poucos milhares de registros), oferecer boa legibilidade, manutenção simples e desempenho satisfatório, além de preservar todos os registros válidos do consolidado de despesas.
-Por fim, as colunas auxiliares são removidas e o arquivo "consolidado_despesas.csv" é sobrescrito com os dados enriquecidos.
-Trade-off técnico: a abordagem de merge direto prioriza a agilidade do processo, além de ser simples e trabalhar bem em conjunto com toda a análise de dados feita anteriormente para eliminação e/ou documentação de erros. Após o tratamento dos dados, não houve necessidade de uma abordagem mais robusta ou complexa para a adição das novas colunas e, portanto, uma solução simples e direta foi preferida.
+- Se forem CNPJs apenas do documento de operadoras ativas, são utilizados os dados do primeiro registro e é registrado um erro de duplicação de CNPJ.
+Além disso, se o CNPJ estiver vazio, a linha é removida e um erro também é registrado. A escolha de remover a linha se deve à poluição do conjunto de dados com valores NaN, visto que o CNPJ é a chave para buscar as novas colunas a serem adicionadas. Ainda assim, o caso é documentado para posterior tratamento manual mais robusto.
+É realizado um join, ou seja, a adição das colunas ocorre por meio de um merge direto. Essa estratégia foi escolhida por ser adequada ao volume estimado de dados (poucos milhares de registros), oferecer boa legibilidade, manutenção simples e desempenho satisfatório, além de preservar todos os registros válidos do consolidado de despesas.
+Por fim, as colunas auxiliares são removidas e o arquivo consolidado_despesas.csv é sobrescrito com os dados enriquecidos.
+Trade-off técnico: a abordagem de merge direto prioriza a agilidade do processo, além de ser simples e funcionar bem em conjunto com toda a análise de dados realizada anteriormente para eliminação e/ou documentação de erros. Após o tratamento dos dados, não houve necessidade de uma abordagem mais robusta ou complexa para a adição das novas colunas e, portanto, uma solução simples e direta foi preferida.
 
 ### Atividade 2.3:
-O objetivo é realizar a agregação dos dados presentes no arquivo "consolidado_despesas.csv", agrupando as informações por RazaoSocial e UF Além do total de despesas, são calculadas as métricas de média e desvio padrão por trimestre.
-Inicialmente, o arquivo consolidado de despesas é lido e a coluna ValorDespesas é convertida para o tipo numérico, garantindo que os cálculos estatísticos sejam executados corretamente. Antes do processo de agregação, é realizada uma validação dos dados linha a linha, com o objetivo de identificar inconsistências como valores nulos, inválidos ou negativos, bem como a ausência de campos considerados chave para a análise, como RazaoSocial e UF. Todas as inconsistências encontradas são registradas no arquivo de erros por meio da função auxiliar de registro. RazaoSocial e UF nulos são removidos para não poluir o documento final, mas se mantém registrados para posterior análise.
-É feito um agrupamento inicial para serem calculados os dados necessários por trimestre. Esses dados são reorganizados usando operações pivot para se tornarem as cólunas de médias e desvio padrão.
-Os ados são novamente agrupados para o formato desajado de razão social e UF. Após isso é calculado o total geral de despesas por RazaoSocial e UF, utilizado como critério principal de ordenação. Todos esses resultados são então consolidados em um único data frame final. O conjunto de dados agregado é ordenado pelo total de despesas, do maior para o menor. A estratégia de ordenação adotada foi utilizando a função sort_values. A mesma é adequada ao volume estimado de dados (poucos milhares de registros), apresentando desempenho satisfatório, simplicidade de implementação e boa legibilidade do código, sem a necessidade de abordagens mais complexas.
-Por fim, o resultado é salvo em um novo arquivo CSV denominado "despesas_agregadas.csv", preservando o arquivo consolidado original. Conforme solicitado no enunciado, o arquivo gerado é compactado em um arquivo ZIP no formato "Teste_{meu_nome}.zip", padronizando a entrega e facilitando o compartilhamento do resultado final.
+O objetivo é realizar a agregação dos dados presentes no arquivo consolidado_despesas.csv, agrupando as informações por RazaoSocial e UF. Além do total de despesas, são calculadas as métricas de média e desvio padrão por trimestre.
+Inicialmente, o arquivo consolidado de despesas é lido e a coluna ValorDespesas é convertida para o tipo numérico, garantindo que os cálculos estatísticos sejam executados corretamente. Antes do processo de agregação, é realizada uma validação dos dados linha a linha, com o objetivo de identificar inconsistências como valores nulos, inválidos ou negativos, bem como a ausência de campos considerados chave para a análise, como RazaoSocial e UF. Todas as inconsistências encontradas são registradas no arquivo de erros por meio de uma função auxiliar de registro. Linhas com RazaoSocial ou UF nulos são removidas para não poluir o documento final, mas permanecem registradas para posterior análise.
+É realizado um agrupamento inicial para o cálculo dos dados necessários por trimestre. Esses dados são reorganizados utilizando operações de pivot para se tornarem as colunas de médias e desvios padrão.
+Os dados são então novamente agrupados no formato desejado de razão social e UF. Em seguida, é calculado o total geral de despesas por RazaoSocial e UF, utilizado como critério principal de ordenação. Todos esses resultados são consolidados em um único DataFrame final. O conjunto de dados agregado é ordenado pelo total de despesas, do maior para o menor. A estratégia de ordenação adotada utiliza a função sort_values, considerada adequada ao volume estimado de dados (poucos milhares de registros), apresentando desempenho satisfatório, simplicidade de implementação e boa legibilidade do código, sem a necessidade de abordagens mais complexas.
+Por fim, o resultado é salvo em um novo arquivo CSV denominado despesas_agregadas.csv, preservando o arquivo consolidado original. Conforme solicitado no enunciado, o arquivo gerado é compactado em um arquivo ZIP no formato Teste_{meu_nome}.zip, padronizando a entrega e facilitando o compartilhamento do resultado final.
 Trade-off técnico: optou-se pelo uso de operações diretas de groupby, pivot e merge, priorizando clareza, manutenção simples e desempenho adequado ao volume de dados analisado. Considerando as características do problema e o tamanho estimado do conjunto de dados, não houve necessidade de empregar estratégias mais complexas de processamento ou ordenação, sendo adotada uma solução direta, eficiente e alinhada às etapas de validação e documentação de inconsistências realizadas nas atividades anteriores.
 
-## Prog 3
-Nesta etapa foi feita a criação de um banco de dados juntamente queries para verificar seu funcionamento correto.
+## prog3
+Nesta etapa, foi realizada a criação de um banco de dados, juntamente com queries para verificar o seu funcionamento correto.
 
 ### Atividade 3.1 - Gerar Banco:
-O objetivo é realizar a criação de um banco em MySQL com tabelas baseados nos arquivos - "consolidado_despesas", "despesas_agregadas" e "cadastro_operadoras".
-Fora do código python foi utilizado o MysqlWorkbench para produzir um banco de dados com o qual o código pudesse se conectar.
-Em código foram buscados os arquivos desejados e feita sua leitura. Todos eram checados para garantir sua existencia antes da execução seguir.
-Todos os arquivos passaram por correções de possíveis erros ainda presentes, mesmo com as limpexas feitas em atividades anteriores.
-Foram verificados campos importantes para a criação de tabelas buscando por:
-- Valores nulos
-- Valores vazios
-- Valores inválidos
-Todos os erros foram registradoas no arquivo de erro para manter histórico e documentação. Para este caso, como os valores observados poderiam impedir a construção das tabelas as linhas identificadas com erros foram removidas, pois sua presença poderia interromper o funcionamento do código.
-Posteriormente os valores foram normalizados para melhor padronização. Nesta etapa os valores são ajustados para seus tipos corretos.
-Caso ajam valores NaN em colunas que não impedem o funcionamento do código elas são convertidas para None, mas não são removidas.
-Obs: caso específico:
-Foi observado um único caso onde duas linhas eram entendidas como diferentes tanto visualmente quanto nas verificações de duplicação de exercicios anteriores. Essas linhas do arquivo "despesas_agregadas" apresentada suas razões sociais indicadas como iguais para o SQL e o programa não dava seguimento. No campo "Operação Específica" é feita justmente a verificação encontrada onde foi possível identificar essas linhas como repetidas. A linha repetida é removida e o código segue para a geração de tabelas.
-Cada tabela foi gerada individualmente, uma tabela para um arquivo.
-A tabela de despesas consolidadas chamada "despesas_operadoras" teve uma chave principal Id artificialmente criada visto qu a mesma possui repetição de todos os seus valores chave, já que representa um histórico de despesas onde uma operadora aparecerá diversas vezes.
-A tabela "despesas_agregadas" usou a razão social e uf como chaves visto que o arquivo está agrupado nesses valores ep ortanto não existem repetições.
-A tabela de cadastro utilizou o cnpj como chave visto que há um cnpj por operadora. Suas duplicatas tratadas em exer´cicios anteriores.
-Após isso todos os dados são adicionados.
+O objetivo é realizar a criação de um banco de dados em MySQL, com tabelas baseadas nos arquivos consolidado_despesas, despesas_agregadas e cadastro_operadoras.
+Fora do código Python, foi utilizado o MySQL Workbench para produzir um banco de dados com o qual o código pudesse se conectar.
+No código, os arquivos desejados foram localizados e lidos. Todos foram verificados previamente para garantir sua existência antes da continuação da execução.
+Todos os arquivos passaram por correções de possíveis erros ainda presentes, mesmo após as limpezas realizadas em atividades anteriores. Foram verificados campos importantes para a criação das tabelas, buscando:
+- Valores nulos,
+- Valores vazios,
+- Valores inválidos,
+Todos os erros foram registrados no arquivo de erros, mantendo histórico e documentação. Neste caso específico, como os valores observados poderiam impedir a construção das tabelas, as linhas identificadas com erros foram removidas, pois sua permanência poderia interromper o funcionamento do código.
+Posteriormente, os valores foram normalizados para melhor padronização. Nesta etapa, os dados são ajustados para seus tipos corretos.
+Caso existam valores NaN em colunas que não impedem o funcionamento do código, eles são convertidos para None, mas não são removidos.
+Observação – caso específico:
+Foi identificado um único caso em que duas linhas eram consideradas diferentes tanto visualmente quanto nas verificações de duplicidade realizadas em exercícios anteriores. Essas linhas, no arquivo despesas_agregadas, apresentavam razões sociais que eram interpretadas como iguais pelo SQL, impedindo o prosseguimento do programa. No campo Operação Específica, foi implementada uma verificação adicional que permitiu identificar essas linhas como duplicadas. A linha repetida foi removida, permitindo a continuidade da geração das tabelas.
+Cada tabela foi gerada individualmente, sendo uma tabela para cada arquivo:
+- A tabela de despesas consolidadas, denominada despesas_operadoras, recebeu uma chave primária artificial (Id), visto que possui repetição de todos os seus campos-chave, pois representa um histórico de despesas no qual uma operadora pode aparecer diversas vezes.
+- A tabela despesas_agregadas utilizou RazaoSocial e UF como chaves, visto que o arquivo já se encontra agregado nesses campos e, portanto, não apresenta repetições.
+- A tabela de cadastro utilizou o CNPJ como chave primária, visto que existe um CNPJ por operadora, com duplicidades já tratadas em exercícios anteriores.
+Após essas definições, todos os dados foram inseridos nas respectivas tabelas.
 Trade-off técnico:
-Normalização - foi escolhida a opçlão de tabelas separadas e normalizadas. Apesar do volume de dados não impedir uma única tabela desnormalizada a normalização permite dados mais claros e com menor necessidade de tratamento quando forem buscados por outros códigos. ALém disso tabelas separadas permitem buscas mais assertivas pela informação desejada e facilita organização.
-Tipo de dados - foi escolhido o demical para valores monetários por sua precisão e fácil leitura, evitando ajuste dos dados após ele ser buscado. Apesar de ser mais pesados queoutra opção como o INTERGER o volume de dados atual não é grande para que essa diferença se torne relevante. Não foram armazenadas datas nas tabelas apenas um número indicando o trimestre e o ano portanto não foi preciso definir por um tipo de dado para datas.
+Normalização: optou-se por tabelas separadas e normalizadas. Apesar de o volume de dados não impedir a utilização de uma única tabela desnormalizada, a normalização proporciona dados mais claros e reduz a necessidade de tratamentos adicionais em consultas futuras. Além disso, tabelas separadas permitem buscas mais assertivas e facilitam a organização do banco.
+Tipo de dados: foi escolhido o tipo DECIMAL para valores monetários, devido à sua precisão e facilidade de leitura, evitando ajustes posteriores após a recuperação dos dados. Embora seja mais pesado do que alternativas como INTEGER, o volume atual de dados não torna essa diferença relevante. Não foram armazenadas datas completas nas tabelas, apenas valores numéricos indicando trimestre e ano, não sendo necessário o uso de tipos específicos para datas.
 
 ### Atividade 3.2, 3.3, 3.4 - Queries
-Todas as queries baixo seguem alguns padrões:
-Todas iniciam estabelecendo conexão com o banco de dados e configurando o cursor com dictionary=True para que os resultados sejam retornados como dicionários, facilitando a leitura e o uso posterior dos dados.
-Além disso a consulta utiliza CTEs (Common Table Expressions – cláusula WITH) para organizar o processamento em etapas lógicas, aumentando a legibilidade, a manutenção e a confiabilidade da análise.
+Todas as queries abaixo seguem alguns padrões comuns:
+Todas iniciam estabelecendo conexão com o banco de dados e configurando o cursor com dictionary=True, para que os resultados sejam retornados como dicionários, facilitando a leitura e o uso posterior dos dados.
+As consultas utilizam CTEs (Common Table Expressions – cláusula WITH) para organizar o processamento em etapas lógicas, aumentando a legibilidade, a manutenção e a confiabilidade da análise.
 
 #### Operadoras com maior aumento percentual de gastos:
-O objetivo é consultar as operadoras que apresentaram o maior crescimento percentual de despesas entre o primeiro e o último trimestre disponível no histórico, utilizando a tabela "despesas_operadoras".
-As estapas desta query são:
-- Primeiro é contada a quantidade total de trimestres distintos existentes na tabela. Isso é feito para garantir que as operadoras avaliadas tenham dados em todos os trimestres.
-- São agrupados os dados por CNPJ, razão social e trimestre, somando os valores de despesas.
-- É feito um filtro que busca apenas operadoras que possuem dados para todos os trimestres analisados.
-- É identificado o primeiro e o último trimestre disponível no histórico para cada operadora.
-- É calculado o crescimento percentual com a formula ((valor_final - valor_inicial)/valor_inicial)*100.
-- Os registros são ordenados de forma decrescente e são buscados apenas os 5 primeiros registros (os 5 maiores).
-Existe uma segunda query abaixo que faz praticamente o mesmo que a query acima, mas buscando as operadoras que não possuem dados em todos os trimestres e mostrando qual trimestre está sem dados para as mesmas. Essa separação foi feita para permitir uma comparação justa entre as operadoras e não levar a conclusões falsas de crescimento percentual visto que existem empresas com mais dados que outras.
+O objetivo é consultar as operadoras que apresentaram o maior crescimento percentual de despesas entre o primeiro e o último trimestre disponível no histórico, utilizando a tabela despesas_operadoras.
+As etapas dessa query são:
+- É contabilizado o número total de trimestres distintos existentes na tabela, garantindo que as operadoras avaliadas possuam dados em todos os períodos.
+- Os dados são agrupados por CNPJ, razão social e trimestre, somando os valores de despesas.
+- É aplicado um filtro que mantém apenas as operadoras com dados em todos os trimestres analisados.
+São identificados o primeiro e o último trimestre disponíveis no histórico para cada operadora.
+- É calculado o crescimento percentual utilizando a fórmula((valor_final - valor_inicial)/valor_inicial)*100.
+- Os registros são ordenados de forma decrescente, retornando apenas os cinco primeiros (maiores crescimentos).
+Existe uma segunda query complementar que executa lógica semelhante, porém identifica operadoras que não possuem dados em todos os trimestres, indicando quais períodos estão ausentes. Essa separação permite uma comparação mais justa entre as operadoras, evitando conclusões incorretas sobre crescimento percentual quando há dados incompletos.
 
 #### Estados com maiores gastos:
-O objetivo é consultar os estados e ordena-los pelo maior valor total de gastos utilizando a tabela "despesas_operadoras".
-As estapas desta query são:
-- É feito um agrupamento por cnpj e uf somando todos os valores destas linhas.
-- Depois é feito um agrupamento apenas por UF somando os valores de todos os CNPJ's naquela UF e calculando o valor médio de despesas também.
-- Os registros são ordenados de forma decrescente e são buscados apenas os 5 primeiros registros (os 5 maiores).
+O objetivo é consultar os estados e ordená-los pelo maior valor total de gastos, utilizando a tabela despesas_operadoras.
+As etapas dessa query são:
+- Agrupamento inicial por CNPJ e UF, somando os valores de despesas.
+- Novo agrupamento apenas por UF, somando os valores de todos os CNPJs daquele estado e calculando também o valor médio de despesas.
+- Os registros são ordenados de forma decrescente, retornando apenas os cinco estados com maiores gastos.
 
 #### Despesas que ultrapassaram valor médio por operadora:
-O objetivo desta consulta é identificar as operadoras que tiveram valores de despesas acima da sua média geral em pelo menos dois trimestres, utilizando de forma conjunta as tabelas "despesas_agregadas" e "despesas_operadoras".
-- É feito um cálculo de média geral de despesas por operadora, utilizando as médias trimestrais já existentes na tabela "despesas_agregadas". Aqui valores nulos são tratados como "COALESCE", evitando erros de cálculo. Apenas os trimestres que possuem valores válidos entram no cálculo da média.
-- Este valor médio é comparado com os valores da tabela "despesas_operadoras" para cada operadora. Aqui os dados são associados por razão social e UF aso o valor seja maior que a média, o trimestre recebe o indicador 1, caso contrário, 0.
-- Os resultados são agrupados por operadora e são somados os valores atribuidos aos semestres. Se o valor for maior ou igual a 2 a operadora teve valores naquele semestre que ultrapassaram sua média. Essas operadoras são mantidas enquanto as outras são descartadas.
-- Os registros são ordenados por ordem descrecente pelo número de trimestres acima da médida.
+O objetivo desta consulta é identificar operadoras que apresentaram valores de despesas acima de sua média geral em pelo menos dois trimestres, utilizando conjuntamente as tabelas despesas_agregadas e despesas_operadoras.
+As etapas são:
+- Cálculo da média geral de despesas por operadora, utilizando as médias trimestrais já existentes na tabela despesas_agregadas. - Valores nulos são tratados com COALESCE, evitando erros de cálculo, e apenas trimestres com valores válidos são considerados.
+Comparação desse valor médio com os registros da tabela despesas_operadoras. Os dados são associados por razão social e UF; quando o valor do trimestre é superior à média, o período recebe o indicador 1, caso contrário, 0.
+- Os resultados são agrupados por operadora e os indicadores são somados. Se o total for maior ou igual a 2, a operadora é considerada elegível, indicando que ultrapassou sua média em pelo menos dois trimestres.
+- Os registros finais são ordenados de forma decrescente pelo número de trimestres acima da média.
 
-## Prog 4
-Essa etapa foi construida uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exer´cicio anterior.
+## prog4
+Nesta etapa, foi construída uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exercício anterior.
 
 ### Backend
-Em app.py estão a configuração da API, middlewares para validação e também para evitar erros de permissão. Além disso estão presentes as rotas:
-- /api/operadoras: para lista de operadoras
-- /api/operadoras/{cnpj}: para dados de uma operadora específica
-- /api/operadoras/{cnpj}/despesas: para lista de despesas de uma operadora específica
-- /api/estatisticas: para estatísticas gerais baseadas nas queries do exercício anterior
-A primeira rota possui sistema de filtro e paginação. O filtro é feito através dos cnpj's e razões sociais enquanto a paginção utiliza off-set para gerar páginas com listas de até 10 operadoras. Um query lista o total de registros para a paginação e a próxima busca as operadoras e seus dados para serem enviadas ao frontend.
-A segunda rota recebe um cnpj específico e retorna informações do mesmo. Primeiro são buscados dados na tabela "registro_operadora". Depois É feita relação do cnpj com sua primeira aparição na tabela "despesas_operadoras" para ser encontrada a razão social da mesma. Com a razão social os ultimos dados pendentes são buscados na tabela de "despesas_agregadas".
-A terceira rota recebe um CNPJ e devolve todas as despesas registradas naquele CNPJ da tabela "despesas_operadoras".
-A quarta rota faz uma séria de queries para buscar diferentes dados que popularam gráficos na interface web. A rota busca:
-- 5 operadoras com maior crescimento percentual de despesas com dados completos e incompletos.
-- Despesas por estado.
-- Operadoras cusjo gasto ultrapassou sua média trimestral
+No arquivo app.py estão as configurações da API, middlewares para validação e também para evitar erros de permissão. Além disso, estão definidas as seguintes rotas:
+- /api/operadoras: lista de operadoras,
+- /api/operadoras/{cnpj}: dados de uma operadora específica,
+- /api/operadoras/{cnpj}/despesas: lista de despesas de uma operadora específica,
+- /api/estatisticas: estatísticas gerais baseadas nas queries do exercício anterior,
+A primeira rota possui sistema de filtro e paginação. O filtro é feito por meio de CNPJs e razões sociais, enquanto a paginação utiliza a estratégia de offset para gerar páginas com listas de até 10 operadoras. Uma query obtém o total de registros para controle da paginação, e outra busca as operadoras e seus respectivos dados para envio ao frontend.
+A segunda rota recebe um CNPJ específico e retorna suas informações. Inicialmente, são buscados os dados na tabela registro_operadora. Em seguida, é feita a relação do CNPJ com sua primeira aparição na tabela despesas_operadoras, a fim de identificar a razão social correspondente. Com a razão social identificada, os dados agregados mais recentes são buscados na tabela despesas_agregadas.
+A terceira rota recebe um CNPJ e retorna todas as despesas registradas para essa operadora na tabela despesas_operadoras.
+A quarta rota executa uma série de queries para obter os dados que alimentam os gráficos da interface web. Essa rota retorna:
+- As cinco operadoras com maior crescimento percentual de despesas, considerando apenas dados completos.
+- Despesas agregadas por estado.
+- Operadoras cujo gasto ultrapassou sua média trimestral.
 Trade-off técnico:
-Framework - o framework escolhi foi o FatsAPI pelo suporte nativo a APIs REST e validação automática de dados. Apesar de complexidade inicial ele permitiu gerar código um pouco menor e mais limpo.
-Estratégia de Paginação - Foi utilizada a estratégia offset-based. Para o volume de dados deste caso o uso do offset não causa prejuizo de processamento, mas isso precisa ser observado em caso de aumento nos dados. O mesmo também permite uma visualização mais limpa limitando quantos itens estarão representados na página web. Em resumo foi definido pela estratégia mais simples visto que a demanda da paginação não necessitava de uma solução mais complexa.
-Cache vs Queries Diretas - Visto que a rota de estatística realiza diversas queries que passam por todas as tabelas criadas foi decidio utilizar a opção de um cache temporário. Apesar da quantidade de dados permite sempre calculo na hora a existencia do cache reduz ainda mais qualquer chance de travamento por sobrexarg no sprocessamento e o FastAPI possui um sistema de cache proprio rapidamente aplicável.
-Estrutura de Resposta da API: a paginação retorna dados e metadados. O uso de metadados facilita a implementação da paginação no frontend e evita novas chamadas desnecessárias da API a custo de mais inforação necessitar de ser transmitida. Essa informação extra não prejudica a comunicação entre front e backend e portanto vale a aplicação.
+Framework: o framework escolhido foi o FastAPI, devido ao suporte nativo a APIs REST e à validação automática de dados. Apesar da complexidade inicial, ele permitiu a criação de um código mais enxuto e organizado.
+Estratégia de paginação: foi utilizada a estratégia offset-based. Para o volume de dados deste projeto, o uso de offset não causa prejuízo significativo de desempenho, mas essa decisão deve ser reavaliada em caso de crescimento do volume de dados. A estratégia também contribui para uma visualização mais limpa, limitando a quantidade de itens exibidos por página.
+Cache vs. queries diretas: como a rota de estatísticas executa diversas queries que percorrem todas as tabelas criadas, optou-se pelo uso de cache temporário. Embora o volume de dados permita cálculos em tempo real, a existência do cache reduz ainda mais o risco de sobrecarga no processamento. Além disso, o FastAPI possui mecanismos de cache de fácil implementação.
+Estrutura de resposta da API: a paginação retorna tanto os dados quanto metadados. O uso de metadados facilita a implementação da paginação no frontend e evita chamadas adicionais à API, ao custo de um pequeno aumento no volume de informações transmitidas. Esse acréscimo não impacta negativamente a comunicação entre frontend e backend e, portanto, foi considerado vantajoso.
 
 ### Frontend
-A aplicação web foi feita em Vue. Foi montada uma interface simples e funcional para a presentação dos dados conforme solicitado.
-Foi utilizado o vue router para fazer mudança de páginas. As telas da interfce são a tela com a lista de operadoras, tela de detalhes da operadora, tela de despesas da operadora e a tela d estatísticas.
-Toda estilização foi feita através do styles.css na pasta assets.
-A página "Companies" lista as operadoras usando o componente "CompaniesList". É este componente que faz a chamada API e controla a paginação. Além disso o mesmo possui dois botões que levam a pagina de detalhes ou despesas da operadora selecionada. Cada botão recebe o dado do CNPJ da operadora e passa ele como parametro de rota que é absorvido pelas outras páginas para fazer suas próprias chamadas.
-A página de "Statistics" utiliza Charts.js e o componente "StatsChart" para gerar gráficos baseados nos dados da rota de estatisticas da API. O componente configura os gráficos e faz ajustes gerais e especificos para cada um dos gráficos mostrados e a página faz a chamada de API separando os dados de cada gráfico e chamando um componente para cada conjunto de dados.
-A página de "Details" e "Costs" funciona de forma semelhante, recebendo o cnpj como parametro de rota e fazendo sua chamada API correpsondente. Os dados então são mostrados em tela de forma estilizada.
+A aplicação web foi desenvolvida em Vue, com uma interface simples e funcional para apresentação dos dados conforme solicitado.
+Foi utilizado o Vue Router para navegação entre páginas. As telas da interface incluem:
+- Tela de listagem de operadoras
+- Tela de detalhes da operadora
+- Tela de despesas da operadora
+- Tela de estatísticas
+Toda a estilização foi realizada por meio do arquivo styles.css, localizado na pasta assets.
+A página Companies lista as operadoras utilizando o componente CompaniesList. Esse componente é responsável por realizar a chamada à API e controlar a paginação. Além disso, ele possui dois botões que direcionam o usuário para as páginas de detalhes ou despesas da operadora selecionada. Cada botão recebe o CNPJ da operadora e o transmite como parâmetro de rota, que é utilizado pelas demais páginas para realizar suas respectivas chamadas à API.
+A página Statistics utiliza a biblioteca Chart.js e o componente StatsChart para gerar gráficos com base nos dados retornados pela rota de estatísticas da API. O componente configura os gráficos e aplica ajustes gerais e específicos para cada visualização. A página realiza a chamada à API, separa os dados por tipo de gráfico e instancia um componente para cada conjunto de informações.
+As páginas Details e Costs funcionam de forma semelhante, recebendo o CNPJ como parâmetro de rota e realizando a chamada correspondente à API. Os dados retornados são então exibidos de forma organizada e estilizada.
 Trade-off técnico:
-Estratégia de Busca/Filtro - visto que o volume de dados permite e para não haver travamento ou sobrecarga de processamento pelo cliente foi escolhido uma busca no servidor. Isso permite utilizar da melhor eficinecia do banco de dados em filtrar e paginar os elementos e mandar para a interface penas os dados necessários.
-Gerenciamento de Estado - visto que as páginas não precisam exibir dados simultaneos, trabalham de forma idependente e não há problema em trasnmitir o cnpj pela rota (já que é uma dado publico) foi definido o uso de  Props/Events simples. basicamente o mesmo é passado como parametro na rota. Novamente a necessidade permitiu a utilização da solução mais simples e limpa.
-Performance da Tabela - foi utilizado um método de paginação onde os dados chegam ao frontend parcializados. São enviadas da API apenas 10 operadoras por vez e portanto a interface apresenta epans essa quantidade por vez. Renderizar todas as operadoras tratria uma tela muito esticada e difícil de visualizar ou buscar pleo item desejado.
-Tratamento de Erros e Loading - O tratamento de erros e estados de carregamento é realizado de forma consistente nas diferentes telas da aplicação. Erros de rede ou da API são capturados por blocos try/catch, exibindo mensagens específicas quando fornecidas pelo backend ou mensagens genéricas como fallback. Estados de loading são tratados por flags explícitas ou verificações condicionais de dados, garantindo feedback visual ao usuário. Para dados vazios, optou-se por mensagens simples e genéricas em telas de listagem, priorizando simplicidade, enquanto telas de detalhe apresentam mensagens mais específicas
+Estratégia de busca e filtro: considerando o volume de dados e para evitar sobrecarga de processamento no cliente, optou-se por realizar buscas e filtros no servidor. Essa abordagem aproveita melhor a eficiência do banco de dados para filtrar e paginar os registros, enviando ao frontend apenas os dados necessários.
+Gerenciamento de estado: como as páginas não precisam exibir dados simultaneamente, funcionam de forma independente e não há restrições quanto ao uso do CNPJ (dado público), optou-se por uma abordagem simples utilizando props e parâmetros de rota. Essa estratégia atendeu à necessidade do projeto de forma clara e direta.
+Performance da tabela: foi adotada a paginação no backend, enviando ao frontend apenas 10 operadoras por requisição. Essa abordagem evita telas excessivamente longas, melhora a usabilidade e facilita a navegação e a busca visual pelos dados.
+Tratamento de erros e loading: o tratamento de erros e estados de carregamento é realizado de forma consistente em todas as telas da aplicação. Erros de rede ou da API são capturados por blocos try/catch, exibindo mensagens específicas quando fornecidas pelo backend ou mensagens genéricas como fallback. Estados de loading são controlados por flags explícitas ou verificações condicionais, garantindo feedback visual ao usuário. Para casos de dados vazios, optou-se por mensagens simples em telas de listagem, enquanto telas de detalhe apresentam mensagens mais específicas.
