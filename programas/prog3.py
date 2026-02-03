@@ -57,16 +57,16 @@ def gerar_tabelas():
     try:
         conn = conectar_banco()
         cursor = conn.cursor()
+
+        # =========================
+        # Ler Arquivos
+        # =========================
     
         #Busca os caminhos dos arquivos a serem usados
         caminho_consolidado = os.path.join(PASTA_RESULTADOS, "consolidado_despesas.csv")
         caminho_agregados = os.path.join(PASTA_RESULTADOS, "despesas_agregadas.csv")
         caminho_cadastro = os.path.join(PASTA_NORMALIZADOS, "cadastro_operadoras.csv")
         caminho_erros = os.path.join(PASTA_RESULTADOS, "consolidado_despesas_erros.csv")
-
-        # =========================
-        # Leitura de arquivos
-        # =========================
 
         #Lê arquivos
         if not os.path.exists(caminho_consolidado):
@@ -85,7 +85,7 @@ def gerar_tabelas():
         df_cadastro = pd.read_csv(caminho_cadastro, dtype=str)
 
         # =========================
-        # Correção de Erros
+        # Corrigir Erros
         # =========================
 
         #Verificação de células vazias
@@ -179,7 +179,7 @@ def gerar_tabelas():
             df_cadastro = df_cadastro[~mask_vazios_cadastro].copy()
 
         # =========================
-        # Normalização de Valores
+        # Normalizar Valores
         # =========================
 
         #Normaliza cnpj
@@ -288,7 +288,7 @@ def gerar_tabelas():
             print("→ Nenhuma duplicata na chave primária encontrada")
 
         # =========================
-        # Criação de Tabelas
+        # Cariar Tabelas
         # =========================
         
         #Tabela de despesas consolidadas
