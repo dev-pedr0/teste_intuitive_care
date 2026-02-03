@@ -21,10 +21,12 @@ def menu():
             case "4":
                 print("""
                     Esse exercício é uma aplicação web. 
-                    No diretório raiz digite o comando 'npm un dev'.
+                    No diretório raiz digite o comando 'npm run dev'.
                     O sistema irá rodar o frontend e o backend em cojunto.
-                    É necessário haver um banco de dados disponível, rodar a primeira opção de código na atividade 3 para gerar as tabelas,
-                    e atualizar a função auxiliar conectar_banco() em support_code.py e em db.py
+                    É necessário haver um banco de dados disponível.
+                    É necessário rodar a primeira opção de código na atividade 3 para gerar as tabelas.
+                    É necessário atualizar a função auxiliar conectar_banco() em support_code.py e em db.py.
+                    É necessário atualizar o CORS em app.py principalmente "allow_origins"
                       """)
 
             case "0":
