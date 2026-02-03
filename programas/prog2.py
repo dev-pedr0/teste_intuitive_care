@@ -78,18 +78,39 @@ def atividade21():
     for idx, row in df.iterrows():
         problemas = []
 
-        #Validação do CNPJ
+        #Validação de cnpj e razão social        
         cnpj = str(row["CNPJ"]).strip()
-        if "não encontrado" in cnpj.lower() or not cnpj_valido(cnpj):
-            problemas.append("CNPJ inválido ou não encontrado")
-            df.at[idx, "Status"] = "NOK"
-        
-        #Validação de Razão Social
+        cnpj_vazio = (
+            not cnpj or
+            cnpj.lower() == "nan" or
+            "não encontrado" in cnpj.lower()
+        )
         razao = str(row["RazaoSocial"]).strip()
-        if not razao or "não encontrado" in razao.lower() or razao.lower() == "nan":
-            problemas.append("Razão Social vazia ou não encontrada")
+        razao_vazia = (
+            not razao or
+            razao.lower() == "nan" or
+            "não encontrado" in razao.lower()
+        )
+
+        #Os dois vazios, deleta a linha
+        if cnpj_vazio and razao_vazia:
+            problemas.append("CNPJ e Razão Social ausentes")
             df.at[idx, "Status"] = "NOK"
-        
+            linhas_para_remover.append(idx)
+        #Um só vazio informa o erro
+        else:
+            if cnpj_vazio:
+                problemas.append("CNPJ ausente")
+                df.at[idx, "Status"] = "NOK"
+
+            elif not cnpj_valido(cnpj):
+                problemas.append("CNPJ inválido")
+                df.at[idx, "Status"] = "NOK"
+
+            if razao_vazia:
+                problemas.append("Razão Social ausente")
+                df.at[idx, "Status"] = "NOK"
+  
         #Re-validação de valor negativo
         if row["ValorDespesas"] < 0:
             problemas.append("ValorDespesas negativo")
@@ -98,7 +119,6 @@ def atividade21():
         #Re-validação de valor zerado
         if row["ValorDespesas"] == 0:
             problemas.append("ValorDespesas zerado")
-            df.at[idx, "Status"] = "NOK"
             linhas_para_remover.append(idx)
 
         #Registra cada problema em "erros"

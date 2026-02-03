@@ -87,7 +87,7 @@ def atividade11():
             anos.append(link)
     anos=sorted(anos, reverse=True)
 
-    #Array onde salvos os nomes dos arquivos
+    #Array onde salva os nomes dos arquivos
     arquivos = []
 
     #Busca pelos ultimos 3 arquivos
@@ -102,7 +102,7 @@ def atividade11():
 
         #Para a execução em caso de erro no retorno da API 
         if resposta.status_code != 200:
-            print("Erro ao acessar página principal")
+            print(f"Erro ao acessar {url_ano}")
             return
 
         #Busca todos os links válidos
@@ -174,7 +174,7 @@ def atividade11():
             r.raise_for_status()
             with open(caminho, "wb") as f:
                 f.write(r.content)            
-            print("Arquivo baixado com sucesso")
+            print(f"Arquivo {nome_arquivo} baixado com sucesso")
         
         except requests.exceptions.RequestException as e:
             print(f"FALHA - {str(e)}")
@@ -248,7 +248,7 @@ def atividade12():
                 continue
             
             for caminho_extraido in arquivos_alvo:
-                # Leitura do arquivo verificando extensão e encoding através de função auxiliar
+                #Leitura do arquivo verificando extensão e encoding através de função auxiliar
                 try:
                     documento = ler_arquivo_com_encoding(caminho_extraido)                   
                     if documento is not None:
@@ -256,7 +256,7 @@ def atividade12():
                                                 
                         df = documento
                         
-                        # Identifica colunas que contêm texto
+                        #Identifica colunas que contêm texto
                         colunas_textuais = [
                             col for col in df.columns
                             if df[col].dtype == 'object' or not pd.api.types.is_numeric_dtype(df[col])
@@ -265,28 +265,37 @@ def atividade12():
                             print(f"Nenhuma coluna textual encontrada em: {caminho_extraido}")
                             continue
                         
-                        # Busca o texto exato "Despesas com Eventos / Sinistros" em qualquer coluna textual
+                        #Verifica se existe coluna DESCRICAO
                         if 'DESCRICAO' in df.columns:
                             col_desc = 'DESCRICAO'
+                        
+                        #Verifica se existe a 4 coluna
                         elif len(df.columns) > 3:
                             col_desc = df.columns[3]
                         else:
                             col_desc = colunas_textuais[0] if colunas_textuais else None
 
+                        #Na coluna de texto selecionada busca por "Despesas com Eventos/Sinistros"
                         if col_desc:
                             filtro = (df[col_desc].astype(str).str.strip() == "Despesas com Eventos / Sinistros")
+                        
+                        #Se não achar cria filtro com FALSE em tudo
                         else:
                             filtro = pd.Series(False, index=df.index)
+                        
+                        # Se ainda não tiver encontrado - busca em todas as colunas com texto "Despesas com Eventos/Sinistros"
                         if not filtro.any() and len(colunas_textuais) > 1:
                             filtro = pd.Series(False, index=df.index)
                             for col in colunas_textuais:
                                 filtro |= (df[col].astype(str).str.strip() == "Despesas com Eventos / Sinistros")
+                        
+                        #Adiciona as linhas com "Despesas com Eventos/Sinistros"
                         linhas_filtradas = df[filtro]
 
                         # Adiciona linhas filtradas em linhas_normalizadas
                         if not linhas_filtradas.empty:
                             linhas_normalizadas.append(linhas_filtradas)
-                            print(f"Linhas adicionadas com sucesso: {caminho_extraido}")
+                            print(f"Linhas com despesas adicionadas com sucesso: {caminho_extraido}")
                         else:
                             print(f"Nenhuma linha correspondente a 'Despesas com Eventos / Sinistros' encontrada")
                     else:
@@ -351,7 +360,7 @@ def atividade12():
 #Atividade 1.3
 def atividade13():
     #=====================#
-    #Parte 1 - criar conversor de registro ans para cnpj e razão social
+    #criar conversor de registro ans para cnpj e razão social
     #=====================#
     
     #Url dos documentos que convertem registro ans para cnpj e razão social
@@ -431,26 +440,21 @@ def atividade13():
         #Busca detectar cnpj's duplicados
         duplicados = resultado.groupby("cnpj").size() > 1
         if duplicados.any():
-            erros = []
-            for cnpj_duplicado in resultado[resultado["cnpj"].duplicated(keep=False)]["cnpj"].unique():
-                grupo = resultado[resultado["cnpj"] == cnpj_duplicado]
+            
+            cnpjs_duplicados = (
+                resultado.loc[resultado["cnpj"].duplicated(keep=False), "cnpj"]
+                .unique()
+            )
+            for cnpj_duplicado in cnpjs_duplicados:
+                grupo = resultado[resultado["cnpj"] == cnpj]
 
                 #Remove duplicada de registro cancelado
                 if "ativo" in grupo["status"].values and "cancelado" in grupo["status"].values:
                     resultado = resultado.drop(grupo[grupo["status"] == "cancelado"].index)
 
-                #Gera log de erro para verificação se forem duplicatas ativas
+                #Cria flag para visualização se forem duplicatas ativas
                 elif all(grupo["status"] == "ativo"):
                     razoes = " / ".join(grupo["razao_social"].unique())
-                    registros_ans = ", ".join(grupo["registro_ans"].astype(str).unique())
-                    erros.append({
-                        "CNPJ": cnpj_duplicado,
-                        "RazoesConflitantes": razoes,
-                        "RegistrosANS": registros_ans,
-                        "TipoErro": "Duplicado em ativos"
-                    })
-
-                    #Cria flag nas linhas que tem duplicatas
                     linha_mantida = grupo.iloc[0].copy()
                     linha_mantida["razao_social"] = f"[DUPLICADO ATIVO] {razoes}"
                     resultado = resultado.drop(grupo.index)
@@ -463,7 +467,7 @@ def atividade13():
         print(f"\nArquivo criado: {caminho_saida}")
 
     #=====================#
-    #Parte 2 - criar arquivo de despesas gerais
+    #criar arquivo de despesas gerais
     #=====================#
 
     #salva o caminho do arquivo a ser utilizado
@@ -477,7 +481,7 @@ def atividade13():
     #Lê o arquivo
     df = pd.read_csv(caminho_arquivo)
 
-    #Busca o cnpj e razão sociual baseado no registro ans
+    #Busca o cnpj e razão social baseado no registro ans
     cnpj_razao = df["registro_ans"].apply(buscar_cnpj_razao)
 
     #Criação das colunas do novo arquivo
@@ -496,7 +500,7 @@ def atividade13():
     df_final = df[colunas_finais]
 
     #=====================#
-    #Parte 3 - Verificar erros
+    #Verificar erros e gerar arquivo final
     #=====================#
     erros_cnpj_razao = []
     erros_valores = []
@@ -550,6 +554,7 @@ def atividade13():
         # Remove zerados
         df_final = df_final[df_final["ValorDespesas"] != 0]
 
+    #Verifica valores negativos
     negativos = df_final[df_final["ValorDespesas"] < 0]
     if not negativos.empty:
         negativos_log = negativos.copy()

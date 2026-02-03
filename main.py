@@ -19,13 +19,14 @@ def menu():
             case "3":
                 prog3.executar()
             case "4":
-                """
+                print("""
                     Esse exercício é uma aplicação web. 
                     No diretório raiz digite o comando 'npm un dev'.
                     O sistema irá rodar o frontend e o backend em cojunto.
                     É necessário haver um banco de dados disponível, rodar a primeira opção de código na atividade 3 para gerar as tabelas,
                     e atualizar a função auxiliar conectar_banco() em support_code.py e em db.py
-                """
+                      """)
+
             case "0":
                 print("Saindo...")
                 break
