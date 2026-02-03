@@ -274,48 +274,6 @@ def obter_estatisticas():
     cursor.execute(query_completos)
     completos = cursor.fetchall()
 
-    #Top 5 operadoras com maior crescimento percentual de despesas com dados incompletos
-    query_incompletos = """
-    WITH base AS (
-        SELECT
-            cnpj,
-            razao_social,
-            trimestre,
-            SUM(valor_despesas) AS total_trimestre
-        FROM despesas_operadoras
-        GROUP BY cnpj, razao_social, trimestre
-    ),
-    limites_operadora AS (
-        SELECT
-            cnpj,
-            razao_social,
-            MIN(trimestre) AS primeiro_trimestre,
-            MAX(trimestre) AS ultimo_trimestre,
-            COUNT(DISTINCT trimestre) AS trimestres_com_dados
-        FROM base
-        GROUP BY cnpj, razao_social
-        HAVING COUNT(DISTINCT trimestre) < 3
-    )
-    SELECT
-        o.cnpj,
-        o.razao_social,
-        b1.total_trimestre AS valor_inicial,
-        b2.total_trimestre AS valor_final,
-        o.trimestres_com_dados,
-        (3 - o.trimestres_com_dados) AS trimestres_sem_dados,
-        ROUND(
-            ((b2.total_trimestre - b1.total_trimestre) / b1.total_trimestre) * 100,
-            2
-        ) AS crescimento_percentual
-    FROM limites_operadora o
-    JOIN base b1 ON b1.cnpj = o.cnpj AND b1.trimestre = o.primeiro_trimestre
-    JOIN base b2 ON b2.cnpj = o.cnpj AND b2.trimestre = o.ultimo_trimestre
-    ORDER BY crescimento_percentual DESC
-    LIMIT 5;
-    """
-    cursor.execute(query_incompletos)
-    incompletos = cursor.fetchall()
-
     #Top despesas por estado
     query_estados = """
     WITH despesas_por_operadora AS (
@@ -400,7 +358,6 @@ def obter_estatisticas():
     return {
         "crescimento_despesas": {
             "dados_completos": completos,
-            "dados_incompletos": incompletos
         },
         "estados_maiores_despesas": estados,
         "operadoras_acima_media": {
