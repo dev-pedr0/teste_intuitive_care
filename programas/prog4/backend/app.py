@@ -227,7 +227,7 @@ def obter_estatisticas():
     conn = conectar_banco()
     cursor = conn.cursor(dictionary=True)
 
-    #Top 5 operadoras co maior crescimento percentual de despesas com dados completos
+    #Top 5 operadoras com maior crescimento percentual de despesas com dados completos
     query_completos = """
     WITH base AS (
         SELECT
@@ -315,7 +315,7 @@ def obter_estatisticas():
     cursor.execute(query_incompletos)
     incompletos = cursor.fetchall()
 
-    #Top 5 estados com maiores despesas
+    #Top despesas por estado
     query_estados = """
     WITH despesas_por_operadora AS (
         SELECT

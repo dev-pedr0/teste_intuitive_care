@@ -142,12 +142,19 @@ Em app.py estão a configuração da API, middlewares para validação e também
 - /api/operadoras/{cnpj}: para dados de uma operadora específica
 - /api/operadoras/{cnpj}/despesas: para lista de despesas de uma operadora específica
 - /api/estatisticas: para estatísticas gerais baseadas nas queries do exercício anterior
-A primeira rota possui sistema de filtro e paginação. O filtro é feito através dos cnpj's e razões sociais enquanto a paginção utiliza off-set para gerar páginas com listas de até 10 operadoras
-
+A primeira rota possui sistema de filtro e paginação. O filtro é feito através dos cnpj's e razões sociais enquanto a paginção utiliza off-set para gerar páginas com listas de até 10 operadoras. Um query lista o total de registros para a paginação e a próxima busca as operadoras e seus dados para serem enviadas ao frontend.
+A segunda rota recebe um cnpj específico e retorna informações do mesmo. Primeiro são buscados dados na tabela "registro_operadora". Depois É feita relação do cnpj com sua primeira aparição na tabela "despesas_operadoras" para ser encontrada a razão social da mesma. Com a razão social os ultimos dados pendentes são buscados na tabela de "despesas_agregadas".
+A terceira rota recebe um CNPJ e devolve todas as despesas registradas naquele CNPJ da tabela "despesas_operadoras".
+A quarta rota faz uma séria de queries para buscar diferentes dados que popularam gráficos na interface web. A rota busca:
+- 5 operadoras com maior crescimento percentual de despesas com dados completos e incompletos.
+- Despesas por estado.
+- Operadoras cusjo gasto ultrapassou sua média trimestral
 
 
 Trade-off técnico:
 Framework - o framework escolhi foi o FatsAPI pelo suporte nativo a APIs REST e validação automática de dados. Apesar de complexidade inicial ele permitiu gerar código um pouco menor e mais limpo.
 Estratégia de Paginação:
 Foi utilizada a estratégia offset-based. Para o volume de dados deste caso o uso do offset não causa prejuizo de processamento, mas isso precisa ser observado em caso de aumento nos dados. O mesmo também permite uma visualização mais limpa limitando quantos itens estarão representados na página web. Em resumo foi definido pela estratégia mais simples visto que a demanda da paginação não necessitava de uma solução mais complexa.
-
+Cache vs Queries Diretas:
+Visto que a rota de estatística realiza diversas queries que passam por todas as tabelas criadas foi decidio utilizar a opção de um cache temporário. Apesar da quantidade de dados permite sempre calculo na hora a existencia do cache reduz ainda mais qualquer chance de travamento por sobrexarg no sprocessamento e o FastAPI possui um sistema de cache proprio rapidamente aplicável.
+Estrutura de Resposta da API: a paginação retorna dados e metadados. O uso de metadados facilita a implementação da paginação no frontend e evita novas chamadas desnecessárias da API a custo de mais inforação necessitar de ser transmitida. Essa informação extra não prejudica a comunicação entre front e backend e portanto vale a aplicação.
