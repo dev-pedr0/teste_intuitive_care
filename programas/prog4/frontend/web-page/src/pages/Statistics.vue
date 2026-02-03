@@ -13,7 +13,7 @@
     />
 
     <StatsChart
-      title="Operadoras Acima da Média de Gastos"
+      title="Valores de Operadoras Acima da Média de Gastos"
       :labels="acimaMediaLabels"
       :data="acimaMediaData"
     />
