@@ -1,7 +1,6 @@
 import os
 import zipfile
 import pandas as pd
-from openpyxl import load_workbook
 
 from programas.support_code import cnpj_valido, ler_arquivo_com_encoding, registrar_erros
 
