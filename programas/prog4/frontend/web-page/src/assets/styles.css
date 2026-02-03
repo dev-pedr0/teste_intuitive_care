@@ -154,25 +154,54 @@ footer {
 
 /* Página de Detalhes */
 .details-page {
-  padding: 2rem;
+  padding: 2.5rem 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
 .details-page h2 {
-  margin-bottom: 1.5rem;
-  color: #1976d2;
+  margin: 0 0 2rem 0;
+  font-size: 1.9rem;
+  font-weight: 600;
+  padding-bottom: 0.75rem;
 }
 
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem 2rem;
-  background: #fff;
-  padding: 1.5rem;
-  border-radius: 6px;
+.details-list {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.details-grid p {
-  margin: 0;
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.75rem;
+  border-bottom: 1px solid #f1f5f9;
+
+}
+
+.separator {
+  border-top: 8px solid #f1f5f9;
+  margin-top: 0.5rem;
+}
+
+.label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 1rem;
+  min-width: 220px;
+}
+
+.value {
+  font-weight: 500;
+  text-align: right;
+  flex: 1;
+  font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+  color: green;
 }
 
 /* Página de Despesas */
