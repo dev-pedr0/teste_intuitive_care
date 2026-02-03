@@ -7,7 +7,7 @@
     />
 
     <StatsChart
-      title="5 Estados com Maior Despesa Total"
+      title="Despesas Totais por Estado"
       :labels="estadosLabels"
       :data="estadosData"
     />
@@ -40,8 +40,7 @@ async function carregarEstatisticas() {
   // Crescimento de despesas (top 5 completos)
   const completos = res.data.crescimento_despesas.dados_completos;
   crescimentoLabels.value = completos.map((o: any) => o.razao_social);
-  crescimentoData.value = completos.map((o: any) => o.crescimento_percentual);
-
+  crescimentoData.value = completos.map((o: any) => parseFloat(o.crescimento_percentual));
   // Estados com maiores despesas
   estadosLabels.value = res.data.estados_maiores_despesas.map((e: any) => e.uf);
   estadosData.value = res.data.estados_maiores_despesas.map(
@@ -53,9 +52,9 @@ async function carregarEstatisticas() {
   .slice(0, 10)                              // limita aos 10 primeiros
   .map((o: any) => o.razao_social);
 
-acimaMediaData.value = res.data.operadoras_acima_media.lista
-  .slice(0, 10)                              // limita aos 10 primeiros
-  .map((o: any) => parseFloat(o.trimestres_acima_da_media));
+  acimaMediaData.value = res.data.operadoras_acima_media.lista
+    .slice(0, 10)                              // limita aos 10 primeiros
+    .map((o: any) => parseFloat(o.trimestres_acima_da_media));
 }
 
 onMounted(() => {

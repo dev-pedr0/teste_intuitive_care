@@ -259,7 +259,7 @@ def obter_estatisticas():
     cursor.execute(query_completos)
     completos = cursor.fetchall()
 
-    #Top 5 operadoras co maior crescimento percentual de despesas com dados incompletos
+    #Top 5 operadoras com maior crescimento percentual de despesas com dados incompletos
     query_incompletos = """
     WITH base AS (
         SELECT
@@ -326,7 +326,6 @@ def obter_estatisticas():
         media_despesas_por_operadora
     FROM despesas_por_uf
     ORDER BY total_despesas_uf DESC
-    LIMIT 5;
     """
     cursor.execute(query_estados)
     estados = cursor.fetchall()

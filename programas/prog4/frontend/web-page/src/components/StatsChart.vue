@@ -45,7 +45,7 @@ const chartOptions = computed(() => {
   const isOperadoras = props.title.includes("Operadoras"); // true para gráfico 1 e 3
   const showXLabels = !isOperadoras;
 
-  return {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
@@ -78,6 +78,16 @@ const chartOptions = computed(() => {
       }
     }
   };
+
+  // Ajuste especial para o gráfico de Crescimento de Gastos (%)
+  if (props.title === "5 Operadoras com Maior Crescimento de Gastos") {
+    options.scales.y.ticks.callback = (value: number) => `${value}%`;
+    options.plugins.tooltip.callbacks = {
+      label: (context: any) => `${context.dataset.label}: ${context.raw}%`
+    };
+  }
+
+  return options;
 });
 </script>
 
