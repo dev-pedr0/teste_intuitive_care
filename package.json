@@ -3,5 +3,8 @@
     "frontend": "cd programas/prog4/frontend/web-page && npm run dev",
     "backend": "cd programas/prog4/backend && python -m uvicorn app:app --reload",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

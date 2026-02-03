@@ -140,25 +140,16 @@ footer {
 }
 
 /* Página de Estatísticas */
-.stats-page section {
+.stats-page {
   background: #ffffff;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   border-radius: 6px;
-}
-
-.stats-page h2 {
-  margin-bottom: 1rem;
-  color: #1976d2;
-}
-
-.stats-list li {
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #eee;
-}
-
-.stats-list li:last-child {
-  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
 }
 
 /* Página de Detalhes */
