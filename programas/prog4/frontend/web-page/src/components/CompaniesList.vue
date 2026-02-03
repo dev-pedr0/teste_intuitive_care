@@ -1,5 +1,7 @@
 <template>
   <div class="operadoras">
+
+    <!-- Filtros -->
     <div class="filtros">
       <div>
         <label>Busca: </label>
@@ -21,6 +23,7 @@
       </div>
     </div>
 
+    <!-- Lista -->
     <ul v-if="operadoras.length">
       <li
         v-for="op in operadoras"
@@ -36,7 +39,8 @@
             {{ op.status_cadastro }} - CNPJ: {{ op.cnpj }}
           </span>
         </div>
-
+        
+        <!-- Botões -->
         <div class="acoes">
           <button @click="irParaDetalhes(op.cnpj)">
             Detalhes
@@ -98,7 +102,7 @@ const totalPaginas = computed(() =>
   Math.ceil(total.value / limit.value)
 );
 
-// Busca dados na API
+// Busca dados na API de operadoras
 async function carregarOperadoras() {
   const params: any = {
     page: page.value,
@@ -153,7 +157,6 @@ function irParaDespesas(id: string) {
   router.push(`/despesas/${id}`);
 }
 
-// Ao montar a página carregaas operadoras
 onMounted(() => {
   carregarOperadoras();
 });

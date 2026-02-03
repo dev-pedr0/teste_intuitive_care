@@ -43,6 +43,7 @@ function formatarMoeda(valor: number | string) {
   }).format(Number(valor));
 }
 
+// Chamada de API de despesas
 async function carregarDespesas() {
   try {
     const cnpj = route.params.cnpj; // pega o cnpj da rota
@@ -53,6 +54,7 @@ async function carregarDespesas() {
   }
 }
 
+// Calcula total de despesas
 const totalDespesas = computed(() =>
   despesas.value.reduce((acc, item) => acc + Number(item.valor_despesas), 0)
 );

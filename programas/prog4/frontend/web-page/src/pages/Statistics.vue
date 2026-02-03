@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import StatsChart from '@/components/StatsChart.vue';
 import axios from "axios";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 
 const crescimentoLabels = ref<string[]>([]);
 const crescimentoData = ref<number[]>([]);
@@ -34,6 +34,7 @@ const estadosData = ref<number[]>([]);
 const acimaMediaLabels = ref<string[]>([]);
 const acimaMediaData = ref<number[]>([]);
 
+// Chamada API de estatísticas
 async function carregarEstatisticas() {
   const res = await axios.get("http://localhost:8000/api/estatisticas");
 

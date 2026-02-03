@@ -12,12 +12,13 @@ async def lifespan(app: FastAPI):
     FastAPICache.init(InMemoryBackend())
     yield
 
+#Instancia do FastAPI
 app = FastAPI(
     title="API Operadoras de Saúde",
     lifespan=lifespan
 )
 
-#header de requisições
+#COnfiguração CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

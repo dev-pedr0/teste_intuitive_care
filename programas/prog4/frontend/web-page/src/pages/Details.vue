@@ -74,6 +74,7 @@ const dados = ref<any>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+// Chamada de API de detalhes
 async function carregarDados() {
   const cnpj = route.params.cnpj as string;
 
