@@ -136,7 +136,7 @@ Comparação desse valor médio com os registros da tabela despesas_operadoras. 
 - Os registros finais são ordenados de forma decrescente pelo número de trimestres acima da média.
 
 ## prog4
-Nesta etapa, foi construída uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exercício anterior.
+Nesta etapa, foi construída uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exercício anterior. Dentro da pasta prog4 também um json POSTMAN com testes da API.
 
 ### Backend
 No arquivo app.py estão as configurações da API, middlewares para validação e também para evitar erros de permissão. Além disso, estão definidas as seguintes rotas:

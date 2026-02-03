@@ -8,7 +8,7 @@ O sistema irá iniciar o frontend e o backend em conjunto.
 É necessário configurar o CORS no arquivo app.py, principalmente o parâmetro allow_origins.
 
 ## prog4
-Nesta etapa, foi construída uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exercício anterior.
+Nesta etapa, foi construída uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exercício anterior. Dentro da pasta prog4 também um json POSTMAN com testes da API
 
 ### Backend
 No arquivo app.py estão as configurações da API, middlewares para validação e também para evitar erros de permissão. Além disso, estão definidas as seguintes rotas:
