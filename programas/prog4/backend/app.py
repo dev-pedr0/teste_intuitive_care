@@ -1,8 +1,21 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
 from db import conectar_banco
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="API Operadoras de Saúde")
+#Cache temporário para dados de rotas
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    FastAPICache.init(InMemoryBackend())
+    yield
+
+app = FastAPI(
+    title="API Operadoras de Saúde",
+    lifespan=lifespan
+)
 
 #header de requisições
 app.add_middleware(
@@ -209,6 +222,7 @@ def historico_despesas(cnpj: str):
 
 #Rota que mostra estatísticas gerais
 @app.get("/api/estatisticas")
+@cache(expire=300)
 def obter_estatisticas():
     conn = conectar_banco()
     cursor = conn.cursor(dictionary=True)

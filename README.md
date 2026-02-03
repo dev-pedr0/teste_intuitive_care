@@ -134,3 +134,20 @@ O objetivo desta consulta é identificar as operadoras que tiveram valores de de
 - Os registros são ordenados por ordem descrecente pelo número de trimestres acima da médida.
 
 ## Prog 4
+Essa etapa foi construida uma API em FastAPI e uma interface web para apresentar os dados do banco de dados criado no exer´cicio anterior.
+
+### Backend
+Em app.py estão a configuração da API, middlewares para validação e também para evitar erros de permissão. Além disso estão presentes as rotas:
+- /api/operadoras: para lista de operadoras
+- /api/operadoras/{cnpj}: para dados de uma operadora específica
+- /api/operadoras/{cnpj}/despesas: para lista de despesas de uma operadora específica
+- /api/estatisticas: para estatísticas gerais baseadas nas queries do exercício anterior
+A primeira rota possui sistema de filtro e paginação. O filtro é feito através dos cnpj's e razões sociais enquanto a paginção utiliza off-set para gerar páginas com listas de até 10 operadoras
+
+
+
+Trade-off técnico:
+Framework - o framework escolhi foi o FatsAPI pelo suporte nativo a APIs REST e validação automática de dados. Apesar de complexidade inicial ele permitiu gerar código um pouco menor e mais limpo.
+Estratégia de Paginação:
+Foi utilizada a estratégia offset-based. Para o volume de dados deste caso o uso do offset não causa prejuizo de processamento, mas isso precisa ser observado em caso de aumento nos dados. O mesmo também permite uma visualização mais limpa limitando quantos itens estarão representados na página web. Em resumo foi definido pela estratégia mais simples visto que a demanda da paginação não necessitava de uma solução mais complexa.
+
